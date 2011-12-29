@@ -65,4 +65,7 @@ class GetPartitionsTestCase(Base):
                 self.assertEqual(layout.union.Signature, 0xf35f23ba) # :8 
                 partition = layout.PartitionEntry[0]
                 self.assertEqual(partition.PartitionStyle, 0) # :48
-                self.assertEqual(partition.StartingOffset, 0x1601008)
+                # FIXME
+                # For some reason, the offset of StartingOffset is before the 32nd byte
+                # Maybe a bug in instruct?
+                self.assertEqual(partition.StartingOffset.QuadPart, 0x100000) # :56
