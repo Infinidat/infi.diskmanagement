@@ -51,3 +51,18 @@ class GetPartitionsTestCase(Base):
                 partitions = io.get_partitions()
                 for partition in partitions:
                     self.assertIn(partition._struct.PartitionStyle, [0, 1, ])
+
+    def investigate(self, disk_number=0):
+        from infi.diskmanagement.ioctl.structures import DRIVE_LAYOUT_INFORMATION_EX
+        with self._ioctl_disk_get_drive_layout_ex as mock:
+            with open("drive_layout_{}".format(disk_number), 'rb') as fd:
+                string = fd.read()
+                mock.return_value = DRIVE_LAYOUT_INFORMATION_EX.create_from_string(string)
+                io = Disk(1)
+                layout = io._get_layout()
+                self.assertEqual(layout.PartitionStyle, 0) # :0
+                self.assertEqual(layout.PartitionCount, 4) # :4
+                self.assertEqual(layout.union.Signature, 0xf35f23ba) # :8 
+                partition = layout.PartitionEntry[0]
+                self.assertEqual(partition.PartitionStyle, 0) # :48
+                self.assertEqual(partition.StartingOffset, 0x1601008)
