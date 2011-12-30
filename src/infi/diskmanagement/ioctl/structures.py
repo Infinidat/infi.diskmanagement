@@ -29,7 +29,7 @@ class PARTITION_INFORMATION_GPT(Struct):
 class PARTITION_INFORMATION_EX__HEADER(Struct):
     _fields_ = [PARTITION_STYLE("PartitionStyle"), Padding(4),
                 Field("StartingOffset", LARGE_INTEGER), Field("PartitionLength", LARGE_INTEGER),
-                ULONG("PartitionNumber"), BOOLEAN("RewritePartition"), BitPadding(3), ]
+                ULONG("PartitionNumber"), BOOLEAN("RewritePartition"), Padding(3), ]
 
 class PARTITION_INFORMATION_EX(Struct):
     def _determine_union_type(self, stream, context=None):
