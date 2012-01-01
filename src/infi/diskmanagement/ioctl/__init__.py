@@ -89,3 +89,16 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         size = _sizeof(struct)
         buffer = ctypes.c_buffer(structures.CREATE_DISK.write_to_string(struct), size)
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_CREATE_DISK, buffer, size, 0, 0)
+
+    def ioctl_volume_is_partition(self):
+        pass
+
+    def ioctl_volume_online(self):
+        pass
+
+    def ioctl_volume_offline(self):
+        pass
+
+    def ioctl_volume_is_offline(self):
+        pass
+

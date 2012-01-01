@@ -37,14 +37,53 @@ def partition_type_specific(func):
         return getattr(_self, '_{}_{}'.format(_name, _type))(*args, **kwargs)
     return callee
 
+class Volume(object):
+    def __init__(self, setupapi_object, disk, partition):
+        super(Volume, self).__init__()
+        self._setupapi_object = setupapi_object
+        self._disk = disk
+        self._partition = partition
+
+    @classmethod
+    def get_from_disk_and_partition(cls, disk, partition):
+        from infi.devicemanager import DeviceManager
+        from infi.devicemanager.ioctl import DeviceIoControl
+        expected = disk._number, partition._struct.PartitionNumber
+        def _filter(volume):
+            actual = DeviceIoControl(volume.psuedo_device_object).storage_get_device_and_partition_number()
+            return actual == expected
+        return filter(_filter, DeviceManager().volumes)
+
+    def _get_device_number(self):
+        from infi.devicemanager import DeviceManager
+        from infi.devicemanager.ioctl import DeviceIoControl
+        return DeviceIoControl(self._setupapi_object.psuedo_device_object).storage_get_device_and_partition_number()
+
+    def _get_wmi_object(self):
+        from ..wmi import WmiClient, iter_volumes
+        from infi.devicemanager.ioctl import DeviceIoControl
+        client = WmiClient()
+        expected = self._get_device_number()
+        def _filter(volume):
+            actual = DeviceIoControl(volume.DeviceID).storage_get_device_and_partition_number()
+            return actual == expected
+        return filter(_filter, iter_volumes(client))[0]
+
+    def format(self, quick=True):
+        # TODO the idea is to do only the formatting through wmi
+        # next step is to figure out to quickly get from the setuapi and ioctl information to the wmi object
+        wmi_object = self._get_wmi_object()
+        wmi_object.Format(QuickFormat=quick)
+
 class Partition(object):
-    def __init__(self, struct):
+    def __init__(self, disk, struct):
         super(Partition, self).__init__()
         self._struct = struct
+        self._disk = disk
 
     def __repr__(self):
         start, size = byte * self.get_start_offset_in_bytes(), byte * self.get_size_in_bytes()
-        return "Partition <start={}, capacity={}".format(start, size)
+        return "Partition <start={}, capacity={}> on {!r}".format(start, size, self._disk)
 
     def is_gpt(self):
         return self._get_layout().PartitionStyle == PARTITION_STYLE_GPT
@@ -101,28 +140,31 @@ class Partition(object):
         disk._update_layout()
 
     @classmethod
-    def create_guid(cls, disk, index=1, start_offset_in_bytes=1024 * 1024, size_in_bytes=None):
+    def create_guid(cls, disk, index=1, start_offset_in_bytes=32832, size_in_bytes=None):
         """:param size: if size_in_bytes is None, the partition will be for the entire disk
         :param offset: either a number or Capacity
         :param size_in_bytes: """
         # I did not get this information from any official documentation, just by doing what the Disk Management 
         partition = cls._create(disk, index, index,
                                 to_large_integer(start_offset_in_bytes),
-                                to_large_integer(disk.get_size_in_bytes() - 4 * 1024 * 1024 \
+                                to_large_integer(disk.get_size_in_bytes() - 65 * 1024 * 1024 \
                                                  if size_in_bytes is None else size_in_bytes))
-        partition.union.PartitionType = structures.GUID(Data1=3956318370, Data2=47589, Data3=17459,
-                                                        Data4=[ 135, 192, 104, 182, 183, 38, 153, 199])
+        partition.union.PartitionType = generate_guid()
         partition.union.PartitionId = generate_guid()
         partition.union.Attributes = 0
         partition.union.Name = [0, ]*36
         disk._update_layout()
+
+    @cached_method
+    def get_volume(self):
+        return Volume.get_from_disk_and_partition(self._disk, self)
 
 class Disk(object):
     def __init__(self, disk_number):
         super(Disk, self).__init__()
         self._number = disk_number
         self._path = r"\\.\PHYSICALDRIVE{}".format(self._number)
-        self._io = DeviceIoControl(self._path)
+        self._io = DeviceIoControl(self._path, False)
 
     def __repr__(self):
         return "Disk <{}>".format(self._path)
@@ -170,14 +212,14 @@ class Disk(object):
     def _iter_partitions_mbr(self):
         for struct in self._get_layout().PartitionEntry[0:3]:
             # The first three MBR partitions are always primary (can be empty entries)
-            partition = Partition(struct)
+            partition = Partition(self, struct)
             if partition.is_empty():
                 continue
             yield partition
         if not self._has_extended_partition():
             return
         for struct in self._get_layout().PartitionEntry[4::4]:
-            partition = Partition(struct)
+            partition = Partition(self, struct)
             if partition.is_empty():
                 continue
             yield partition
@@ -187,7 +229,7 @@ class Disk(object):
 
     def _iter_partitions_gpt(self):
         for struct in self._get_layout().PartitionEntry[1:]:
-            partition = Partition(struct)
+            partition = Partition(self, struct)
             yield partition
 
     def get_partitions(self):

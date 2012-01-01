@@ -46,18 +46,6 @@ class StructuresTestCase(unittest.TestCase):
         buffer = ctypes.c_buffer("\x00" * 137, 137)
         struct = PARTITION_INFORMATION_EX.create_from_string(buffer)
 
-    def test_read_pointer(self):
-        class MyStruct(Struct):
-            _fields_ = [DWORD("counter"), DWORD("gap"),
-                        VarSizeArray("entries",
-                                     ReadPointer("counter"),
-                                     PARTITION_INFORMATION_EX,
-                                     )]
-
-        buffer = ctypes.c_buffer("\x03\x00\x00\x00\x01\x00\x00\x00" + "\x00" * 144 * 3 , 144 * 3 + 8)
-        instance = MyStruct.create_from_string(buffer)
-        self.assertEqual(len(instance.entries), 3)
-
     def test_create_disk__mbr(self):
         """:param partition_style: int
         :param signature: int
