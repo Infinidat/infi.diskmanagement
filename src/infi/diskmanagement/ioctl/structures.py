@@ -1,6 +1,6 @@
 
 from infi.wioctl.structures import *
-from infi.instruct import  StructFunc, SelectStructByFunc, VarSizeArray, ReadPointer, Padding, BitPadding
+from infi.instruct import  StructFunc, SelectStructByFunc, VarSizeArray, ReadPointer, Padding
 
 PARTITION_STYLE = ULInt32
 
@@ -12,15 +12,15 @@ def _max_size_struct(a, b):
     return size_a if size_a > size_b else size_b
 
 def _extract_partition_style_from_header(header, stream, context):
-    return header.create_from_stream(stream, context).PartitionStyle
+    return context.get("struct", None).PartitionStyle
 
 # PARTITION_INFORMATION
 
 class PARTITION_INFORMATION_MBR(Struct):
-    _fields_ = [UCHAR("PartitionType"), BitPadding(3),
-                BOOLEAN("BootIndicator"), BitPadding(3),
-                BOOLEAN("RecognizedPartition"), BitPadding(3),
-                ULONG("HiddenSectors"), Padding(96)]
+    _fields_ = [UCHAR("PartitionType"),
+                BOOLEAN("BootIndicator"),
+                BOOLEAN("RecognizedPartition"), Padding(1),
+                ULONG("HiddenSectors"), Padding(104)]
 
 class PARTITION_INFORMATION_GPT(Struct):
     _fields_ = [Field("PartitionType", GUID), Field("PartitionId", GUID), ULONG64("Attributes"),

@@ -60,6 +60,12 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         buffer = self._partial_ioctl_diks_get_drive_layout_ex()
         return _extract_whole_structure_from_drive_layout_buffer(buffer)
 
+    def ioctl_disk_set_drive_layout_ex(self, layout):
+        size = layout.sizeof(layout)
+        input_buffer = ctypes.c_buffer(layout.write_to_string(layout))
+        output_buffer = ctypes.c_buffer('\x00' * size, size)
+        self.ioctl(infi.wioctl.constants.IOCTL_DISK_SET_DRIVE_LAYOUT_EX, input_buffer, size, output_buffer, size)
+
     def ioctl_disk_delete_drive_layout(self):
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_DELETE_DRIVE_LAYOUT, 0, 0, 0, 0)
 

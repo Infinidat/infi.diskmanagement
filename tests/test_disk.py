@@ -45,3 +45,12 @@ class ThirdDriveLayoutTestCase(FirstDriveLayoutTestCase):
 
     def test_type(self):
         self.assertTrue(self._disk.is_gpt())
+
+class EighthDriveLayoutTestCase(FirstDriveLayoutTestCase):
+    def setUp(self):
+        unittest.TestCase.setUp(self)
+        self._disk = Disk(7)
+
+    def test_set_layout(self):
+        layout = self._disk._get_layout()
+        self._disk._set_layout(layout)

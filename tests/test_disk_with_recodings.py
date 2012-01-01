@@ -14,7 +14,7 @@ def chdir_tests():
     finally:
         os.chdir(curdir)
 
-EXPECTED_NUMBERS_OF_PARTITIONS = [4, 4, 1, 12, 4, 4, 4]
+EXPECTED_NUMBERS_OF_PARTITIONS = [4, 4, 2, 8, 4, 4, 4]
 
 class Base(unittest.TestCase):
     def setUp(self):
