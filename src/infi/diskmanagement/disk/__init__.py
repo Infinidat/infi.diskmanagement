@@ -98,7 +98,7 @@ class Volume(object):
         from ..mount_manager import MountManager
         return MountManager().add_volume_mount_point(self, mount_point)
 
-    def remove_mount_point(self):
+    def remove_mount_point(self, mount_point):
         from ..mount_manager import MountManager
         return MountManager().remove_volume_mount_point(self, mount_point)
 
