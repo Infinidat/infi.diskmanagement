@@ -91,6 +91,9 @@ class Volume(object):
         return MountManager().get_volume_guid(self)
 
     def get_moint_points(self):
+        from ..mount_manager import MountManager
+        return MountManager().get_volume_mount_points(self)
+
         raise NotImplementedError()
 
     def get_drive_letter(self):
