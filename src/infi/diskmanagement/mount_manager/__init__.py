@@ -59,7 +59,7 @@ class MountManager(object):
         return _slice_unicode_string_from_buffer(output_buffer, offset, length).split('\\')[-1][0]
 
     def get_volume_mount_points(self, volume):
-        volume_guid = self.get_volume_guid(volume)
+        volume_guid = u"{}\\".format(self.get_volume_guid(volume))
         volumePathNames, bufferLength, returnLength = GetVolumePathNamesForVolumeNameW(volumeName=volume_guid)
         return volumePathNames
 
