@@ -154,4 +154,4 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         output_buffer = ctypes.c_buffer('\x00' * 256, 256)
         self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_POINTS,
                    input_buffer, input_buffer_size, output_buffer, output_buffer_size)
-        return output_buffer.value
+        return output_buffer
