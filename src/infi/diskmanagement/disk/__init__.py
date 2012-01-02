@@ -87,9 +87,8 @@ class Volume(object):
         wmi_object.Format(QuickFormat=quick)
 
     def get_volume_guid(self):
-
-        # Is there a more efficient way of getting the GUID (Not through WMI/VDS)?
-        return re.compile(r".*(?P<guid>{.*}).*").match(self._get_wmi_object().DeviceID).groupdict()['guid']
+        from ..mount_manager import MountManager
+        return MountManager().get_volume_guid(self)
 
     def get_moint_points(self):
         raise NotImplementedError()
@@ -101,9 +100,6 @@ class Volume(object):
         raise NotImplementedError()
 
     def assign_drive_letter(self):
-        raise NotImplementedError()
-
-    def get_volume_guid(self):
         raise NotImplementedError()
 
 class Partition(object):
