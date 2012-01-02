@@ -3,6 +3,7 @@ from infi.wioctl.structures import *
 from infi.instruct import  StructFunc, SelectStructByFunc, VarSizeArray, ReadPointer, Padding
 
 PARTITION_STYLE = ULInt32
+ULONGLONG = ULInt64
 
 def _sizeof(struct):
     return struct.min_max_sizeof().max
@@ -88,3 +89,16 @@ class CREATE_DISK(Struct):
 
     _fields_ = CREATE_DISK__HEADER._fields_ + \
                 [SelectStructByFunc("union", _determine_union_type, (0, 20)), ]
+
+class GET_DISK_ATTRIBUTES(Struct):
+    _fields_ = [ULONG("Version"), ULONG("Reserved"), ULONGLONG("Attributes")]
+
+class SET_DISK_ATTRIBUTES(Struct):
+    _fields_ = [ULONG("Version"), BOOLEAN("Persist"), BOOLEAN("RelinquishOwnership"),
+                Padding(2), ULONGLONG("Attributes"), ULONGLONG("AttributesMask"),
+                Field("Caller", GUID)]
+
+DISK_SAN_POLICY = ULInt32
+
+class DISK_SAN_SETTINGS(Struct):
+    _fields_ = [DISK_SAN_POLICY("SanPolicy"), ]

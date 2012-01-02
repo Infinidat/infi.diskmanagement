@@ -4,6 +4,7 @@ from infi.pyutils.lazy import cached_method, clear_cache
 from infi.pyutils.decorators import wraps
 from ..ioctl import DeviceIoControl, generate_signature, generate_guid, structures, constants
 from ..ioctl.constants import PARTITION_STYLE_MBR, PARTITION_STYLE_GPT, PARTITION_STYLE_RAW
+from infi.diskmanagement.ioctl import GUID_ZERO
 
 def is_zero(large_integer):
     """:returns: if the value of LARGE_INTEGER is zero"""
@@ -43,6 +44,15 @@ class Volume(object):
         self._setupapi_object = setupapi_object
         self._disk = disk
         self._partition = partition
+        self._io = DeviceIoControl(self._path, False)
+
+    @property
+    @cached_method
+    def _path(self):
+        return self._setupapi_object.psuedo_device_object
+
+    def __repr__(self):
+        return "Volume <{}>".format(self._path)
 
     @classmethod
     def get_from_disk_and_partition(cls, disk, partition):
@@ -52,7 +62,7 @@ class Volume(object):
         def _filter(volume):
             actual = DeviceIoControl(volume.psuedo_device_object).storage_get_device_and_partition_number()
             return actual == expected
-        return filter(_filter, DeviceManager().volumes)
+        return Volume(filter(_filter, DeviceManager().volumes)[0], disk, partition)
 
     def _get_device_number(self):
         from infi.devicemanager import DeviceManager
@@ -65,7 +75,7 @@ class Volume(object):
         client = WmiClient()
         expected = self._get_device_number()
         def _filter(volume):
-            actual = DeviceIoControl(volume.DeviceID).storage_get_device_and_partition_number()
+            actual = DeviceIoControl(volume.DeviceID.rstrip(r'\\')).storage_get_device_and_partition_number()
             return actual == expected
         return filter(_filter, iter_volumes(client))[0]
 
@@ -259,3 +269,34 @@ class Disk(object):
     def create_first_partition(self):
         create_method = Partition.create_guid if self.is_gpt() else Partition.create_primary
         create_method(self)
+
+    def is_offline(self):
+        return self._io.ioctl_disk_get_disk_attributes().Attributes & constants.DISK_ATTRIBUTE_OFFLINE
+
+    def is_online(self):
+        return not self.is_offline()
+
+    def is_read_only(self):
+        return self._io.ioctl_disk_get_disk_attributes().Attributes & constants.DISK_ATTRIBUTE_READ_ONLY
+
+    def _set_dist_attributes(self, attributes, mask):
+        set_struct = structures.SET_DISK_ATTRIBUTES(Version=0x28, Persist=constants.TRUE,
+                                                    RelinquishOwnership=0, Attributes=attributes,
+                                                    AttributesMask=mask,
+                                                    Caller=GUID_ZERO)
+        io = DeviceIoControl(self._path, True)
+        io.ioctl_disk_set_disk_attributes(set_struct)
+
+    def online(self):
+        self._set_dist_attributes(0, constants.DISK_ATTRIBUTE_OFFLINE)
+
+    def offline(self):
+        self._set_dist_attributes(constants.DISK_ATTRIBUTE_OFFLINE, constants.DISK_ATTRIBUTE_OFFLINE)
+
+    def read_only(self):
+        self._set_dist_attributes(constants.DISK_ATTRIBUTE_READ_ONLY, constants.DISK_ATTRIBUTE_READ_ONLY)
+
+    def read_write(self):
+        self._set_dist_attributes(0, constants.DISK_ATTRIBUTE_READ_ONLY)
+
+

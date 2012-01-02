@@ -90,15 +90,54 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         buffer = ctypes.c_buffer(structures.CREATE_DISK.write_to_string(struct), size)
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_CREATE_DISK, buffer, size, 0, 0)
 
+    def _bool_ioctl(self, ioctl_number):
+        try:
+            self.ioctl(ioctl_number, 0, 0, 0, 0)
+        except infi.wioctl.api.WindowsException, e:
+            if e.winerror != 1:
+                raise
+            return False
+        return True
+
     def ioctl_volume_is_partition(self):
-        pass
-
-    def ioctl_volume_online(self):
-        pass
-
-    def ioctl_volume_offline(self):
-        pass
+        return self._bool_ioctl(infi.wioctl.constants.IOCTL_VOLUME_IS_PARTITION)
 
     def ioctl_volume_is_offline(self):
-        pass
+        return self._bool_ioctl(infi.wioctl.constants.IOCTL_VOLUME_IS_OFFLINE)
 
+    def ioctl_volume_supports_online_offline(self):
+        return self._bool_ioctl(infi.wioctl.constants.IOCTL_VOLUME_SUPPORTS_ONLINE_OFFLINE)
+
+    def ioctl_volume_is_io_capable(self):
+        return self._bool_ioctl(infi.wioctl.constants.IOCTL_VOLUME_IS_IO_CAPABLE)
+
+    def ioctl_volume_online(self):
+        return self._bool_ioctl(infi.wioctl.constants.IOCTL_VOLUME_ONLINE)
+
+    def ioctl_volume_offline(self):
+        return self._bool_ioctl(infi.wioctl.constants.IOCTL_VOLUME_OFFLINE)
+
+    def ioctl_disk_get_disk_attributes(self):
+        klass = structures.GET_DISK_ATTRIBUTES
+        size = _sizeof(klass)
+        buffer = ctypes.c_buffer('\x00' * size, size)
+        self.ioctl(infi.wioctl.constants.IOCTL_DISK_GET_DISK_ATTRIBUTES, 0, 0, buffer, size)
+        return klass.create_from_string(buffer)
+
+    def ioctl_disk_set_disk_attributes(self, attributes):
+        size = attributes.sizeof(attributes)
+        input_buffer = ctypes.c_buffer(attributes.write_to_string(attributes))
+        self.ioctl(infi.wioctl.constants.IOCTL_DISK_SET_DISK_ATTRIBUTES, input_buffer, size, 0, 0)
+
+    def ioctl_disk_get_san_settings(self):
+        klass = structures.DISK_SAN_SETTINGS
+        size = _sizeof(klass)
+        buffer = ctypes.c_buffer('\x00' * size, size)
+        self.ioctl(infi.wioctl.constants.IOCTL_DISK_GET_SAN_SETTINGS, 0, 0, buffer, size)
+        return klass.create_from_string(buffer)
+
+    def ioctl_disk_set_san_settings(self, settings):
+        klass = structures.DISK_SAN_SETTINGS
+        size = _sizeof(klass)
+        buffer = ctypes.c_buffer(settings.write_to_string(settings))
+        self.ioctl(infi.wioctl.constants.IOCTL_DISK_SET_SAN_SETTINGS, buffer, size, 0, 0)
