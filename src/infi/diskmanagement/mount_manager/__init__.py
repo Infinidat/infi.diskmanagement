@@ -64,7 +64,8 @@ class MountManager(object):
         returnLength = DWORD(0)
         GetVolumePathNamesForVolumeNameW(volumeName=volume_guid, volumePathNames=volumePathNames,
                                          returnLength=returnLength)
-        return ctypes.wstring_at(ctypes.addressof(volumePathNames), returnLength.value).split(u"\x00")
+        return ctypes.wstring_at(ctypes.addressof(volumePathNames),
+                                 returnLength.value).split(u"\x00"*ctypes.sizeof(ctypes.c_wchar))
 
 class PartitionManager(object):
     def __init__(self):
