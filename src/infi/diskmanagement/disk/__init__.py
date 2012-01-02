@@ -298,7 +298,7 @@ class Disk(object):
     def is_read_only(self):
         return self._io.ioctl_disk_get_disk_attributes().Attributes & constants.DISK_ATTRIBUTE_READ_ONLY
 
-    def _set_dist_attributes(self, attributes, mask):
+    def _set_disk_attrttributes(self, attributes, mask):
         set_struct = structures.SET_DISK_ATTRIBUTES(Version=0x28, Persist=constants.TRUE,
                                                     RelinquishOwnership=0, Attributes=attributes,
                                                     AttributesMask=mask,
@@ -307,16 +307,16 @@ class Disk(object):
         io.ioctl_disk_set_disk_attributes(set_struct)
 
     def online(self):
-        self._set_dist_attributes(0, constants.DISK_ATTRIBUTE_OFFLINE)
+        self._set_disk_attrttributes(0, constants.DISK_ATTRIBUTE_OFFLINE)
 
     def offline(self):
-        self._set_dist_attributes(constants.DISK_ATTRIBUTE_OFFLINE, constants.DISK_ATTRIBUTE_OFFLINE)
+        self._set_disk_attrttributes(constants.DISK_ATTRIBUTE_OFFLINE, constants.DISK_ATTRIBUTE_OFFLINE)
 
     def read_only(self):
-        self._set_dist_attributes(constants.DISK_ATTRIBUTE_READ_ONLY, constants.DISK_ATTRIBUTE_READ_ONLY)
+        self._set_disk_attrttributes(constants.DISK_ATTRIBUTE_READ_ONLY, constants.DISK_ATTRIBUTE_READ_ONLY)
 
     def read_write(self):
-        self._set_dist_attributes(0, constants.DISK_ATTRIBUTE_READ_ONLY)
+        self._set_disk_attrttributes(0, constants.DISK_ATTRIBUTE_READ_ONLY)
 
     def get_volume_number(self):
         self._io.ioctl_volume_query_volume_number()
