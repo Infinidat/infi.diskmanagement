@@ -108,3 +108,20 @@ class GetVolumePathNamesForVolumeNameW(WrappedFunction):
                 (LPWSTR, IN_OUT, "volumePathNames"),
                 (DWORD, IN, "bufferLength", DWORD(MAX_PATH_NAMES)),
                 (POINTER(DWORD), IN_OUT, "returnLength"))
+
+class SetVolumeMountPointW(WrappedFunction):
+    return_value = infi.wioctl.api.BOOL
+
+    @classmethod
+    def get_errcheck(cls):
+        return infi.wioctl.api.errcheck_bool()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((LPCWSTR, IN, "volumeMountPoint"),
+                (LPCWSTR, IN, "volumeName"))
+
