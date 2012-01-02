@@ -26,7 +26,7 @@ class MountManager(object):
                       [field.name for field in struct._fields_.fields[0:26]])
 
     def get_volume_guid(self, volume):
-        device_name = r"\Device\{}".format(volume._path.split('\\')[-1])
+        device_name = r"\Device\{}\x00".format(volume._path.split('\\')[-1])
         unicode_buffer = ctypes.create_unicode_buffer(device_name)
         from os.path import sep
         buffer_string = ctypes.string_at(ctypes.addressof(unicode_buffer),
