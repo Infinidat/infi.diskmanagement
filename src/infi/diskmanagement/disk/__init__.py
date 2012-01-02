@@ -94,15 +94,13 @@ class Volume(object):
         from ..mount_manager import MountManager
         return MountManager().get_volume_mount_points(self)
 
-    def get_drive_letter(self):
+    def add_mount_point(self, mount_point):
         from ..mount_manager import MountManager
-        return MountManager().get_volume_drive_letter(self)
+        return MountManager().add_volume_mount_point(self, mount_point)
 
-    def add_mount_point(self):
-        raise NotImplementedError()
-
-    def assign_drive_letter(self):
-        raise NotImplementedError()
+    def remove_mount_point(self):
+        from ..mount_manager import MountManager
+        return MountManager().remove_volume_mount_point(self, mount_point)
 
 class Partition(object):
     def __init__(self, disk, struct):
