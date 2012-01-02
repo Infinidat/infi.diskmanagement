@@ -71,7 +71,11 @@ class MountManager(object):
         SetVolumeMountPointW(create_unicode_buffer(mount_point, volume_guid))
 
     def remove_volume_mount_point(self, volume, mount_point):
-        raise NotImplementedError()
+        if not mount_point.endswith('\\'):
+            mount_point = u"{}\\".format(mount_point)
+        mount_points = self.get_volume_mount_points(volume)
+        assert mount_point in mount_points, "{} is not a mount point of {!r}".format(mount_point, volume)
+        DeleteVolumeMountPointW(create_unicode_buffer(mount_point))
 
 class PartitionManager(object):
     def __init__(self):
@@ -131,4 +135,19 @@ class SetVolumeMountPointW(WrappedFunction):
     def get_parameters(cls):
         return ((LPCWSTR, IN, "volumeMountPoint"),
                 (LPCWSTR, IN, "volumeName"))
+
+class DeleteVolumeMountPointW(WrappedFunction):
+    return_value = infi.wioctl.api.BOOL
+
+    @classmethod
+    def get_errcheck(cls):
+        return infi.wioctl.api.errcheck_bool()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((LPCWSTR, IN, "volumeMountPoint"),)
 
