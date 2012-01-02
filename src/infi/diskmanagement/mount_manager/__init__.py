@@ -53,7 +53,7 @@ class MountManager(object):
         input_buffer = self._create_input_buffer_for_query_points_ioctl(volume)
         output_buffer = self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer) + 1)
         struct = structures.MOUNTMGR_MOUNT_POINTS.create_from_string(output_buffer)
-        if len(struct.MountPoints != 2):
+        if len(struct.MountPoints) != 2:
             return None
         offset, length = struct.MountPoints[1].SymbolicLinkNameOffset, struct.MountPoints[1].SymbolicLinkNameLength
         return _slice_unicode_string_from_buffer(output_buffer, offset, length).split('\\')[-1][0]
