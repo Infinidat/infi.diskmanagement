@@ -80,6 +80,7 @@ class PartitionManager(object):
         return self._io.ioctl_disk_set_san_settings(settings)
 
 import infi.wioctl
+from infi.crap import WrappedFunction, IN, IN_OUT, OUT
 from ctypes import c_wchar_p as LPCWSTR
 from ctypes import c_wchar_p as LPWSTR
 from ctypes import c_ulong as DWORD
@@ -87,7 +88,7 @@ from ctypes import POINTER, create_unicode_buffer
 
 MAX_PATH_NAMES = 32767
 
-class GetVolumePathNamesForVolumeNameW(infi.wioctl.api.WrappedFunction):
+class GetVolumePathNamesForVolumeNameW(WrappedFunction):
     return_value = infi.wioctl.api.BOOL
 
     @classmethod
@@ -100,7 +101,7 @@ class GetVolumePathNamesForVolumeNameW(infi.wioctl.api.WrappedFunction):
 
     @classmethod
     def get_parameters(cls):
-        return ((LPCWSTR, infi.wioctl.api.IN, "volumeName"),
-                (LPWSTR, infi.wioctl.api.IN_OUT, "volumePathNames", create_unicode_buffer(MAX_PATH_NAMES)),
-                (DWORD, infi.wioctl.api.IN, "bufferLength", DWORD(MAX_PATH_NAMES)),
-                (POINTER(DWORD), infi.wioctl.api.IN_OUT, "returnLength", DWORD(MAX_PATH_NAMES)))
+        return ((LPCWSTR, IN, "volumeName"),
+                (LPWSTR, OUT, "volumePathNames", create_unicode_buffer(MAX_PATH_NAMES)),
+                (DWORD, IN, "bufferLength", DWORD(MAX_PATH_NAMES)),
+                (POINTER(DWORD), IN_OUT, "returnLength", DWORD(MAX_PATH_NAMES)))
