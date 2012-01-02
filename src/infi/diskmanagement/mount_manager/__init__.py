@@ -103,6 +103,6 @@ class GetVolumePathNamesForVolumeNameW(WrappedFunction):
     @classmethod
     def get_parameters(cls):
         return ((LPCWSTR, IN, "volumeName"),
-                (LPWSTR, OUT, "volumePathNames", create_unicode_buffer(MAX_PATH_NAMES)),
+                (LPWSTR, IN_OUT, "volumePathNames"),
                 (DWORD, IN, "bufferLength", DWORD(MAX_PATH_NAMES)),
                 (POINTER(DWORD), IN_OUT, "returnLength", DWORD(MAX_PATH_NAMES)))
