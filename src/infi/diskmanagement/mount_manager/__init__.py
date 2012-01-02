@@ -32,7 +32,7 @@ class MountManager(object):
         buffer_string = ctypes.string_at(ctypes.addressof, unicode_buffer,
                                          len(unicode_buffer) * ctypes.sizeof(ctypes.c_wchar))
         triplet = structures.MOUNTMGR_MOUNT_POINT(SymbolicLinkNameOffset=0, SymbolicLinkNameLength=0,
-                                                  UniqueIdOffset=0, UniqueIdOffset=0,
+                                                  UniqueIdOffset=0, UniqueIdLength=0,
                                                   DeviceNameOffset=_sizeof(structures.MOUNTMGR_MOUNT_POINT),
                                                   DeviceNameLength=len(buffer_string))
         triplet_string = structures.MOUNTMGR_MOUNT_POINT.write_to_string(triplet)
