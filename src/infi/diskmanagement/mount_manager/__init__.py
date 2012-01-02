@@ -61,8 +61,10 @@ class MountManager(object):
     def get_volume_mount_points(self, volume):
         volume_guid = u"{}\\".format(self.get_volume_guid(volume))
         volumePathNames = create_unicode_buffer(MAX_PATH_NAMES)
-        GetVolumePathNamesForVolumeNameW(volumeName=volume_guid, volumePathNames=volumePathNames)
-        return volumePathNames
+        returnLength = DWORD(0)
+        GetVolumePathNamesForVolumeNameW(volumeName=volume_guid, volumePathNames=volumePathNames,
+                                         bufferLength=POINTER(returnLength))
+        return ctypes.wstring_at(ctypes.addressof(volumePathNames), returnLength.value).split(u"\x00")
 
 class PartitionManager(object):
     def __init__(self):
@@ -105,4 +107,4 @@ class GetVolumePathNamesForVolumeNameW(WrappedFunction):
         return ((LPCWSTR, IN, "volumeName"),
                 (LPWSTR, IN_OUT, "volumePathNames"),
                 (DWORD, IN, "bufferLength", DWORD(MAX_PATH_NAMES)),
-                (POINTER(DWORD), IN_OUT, "returnLength", DWORD(MAX_PATH_NAMES)))
+                (POINTER(DWORD), IN_OUT, "returnLength"))
