@@ -103,4 +103,4 @@ class GetVolumePathNamesForVolumeNameW(infi.wioctl.api.WrappedFunction):
         return ((LPCWSTR, infi.wioctl.api.IN, "volumeName"),
                 (LPWSTR, infi.wioctl.api.IN_OUT, "volumePathNames", create_unicode_buffer(MAX_PATH_NAMES)),
                 (DWORD, infi.wioctl.api.IN, "bufferLength", DWORD(MAX_PATH_NAMES)),
-                (POINTER(DWORD), infi.wioctl.api.IN_OUT, "returnLength"), DWORD(MAX_PATH_NAMES))
+                (POINTER(DWORD), infi.wioctl.api.IN_OUT, "returnLength", DWORD(MAX_PATH_NAMES)))
