@@ -29,7 +29,7 @@ class MountManager(object):
         from os.path import sep
         device_name = r"\Device\{}".format(volume._path.split(sep)[-1])
         unicode_buffer = ctypes.create_unicode_buffer(device_name)
-        buffer_string = ctypes.string_at(ctypes.addressof(unicode_buffer)
+        buffer_string = ctypes.string_at(ctypes.addressof(unicode_buffer),
                                          len(unicode_buffer) * ctypes.sizeof(ctypes.c_wchar))
         triplet = structures.MOUNTMGR_MOUNT_POINT(SymbolicLinkNameOffset=0, SymbolicLinkNameLength=0,
                                                   UniqueIdOffset=0, UniqueIdLength=0,
