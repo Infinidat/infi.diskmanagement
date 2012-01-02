@@ -141,3 +141,17 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         size = _sizeof(klass)
         buffer = ctypes.c_buffer(settings.write_to_string(settings))
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_SET_SAN_SETTINGS, buffer, size, 0, 0)
+
+    def ioctl_volume_query_volume_number(self):
+        klass = structures.VOLUME_NUMBER
+        size = _sizeof(klass)
+        buffer = ctypes.c_buffer('\x00' * size, size)
+        self.ioctl(infi.wioctl.constants.IOCTL_VOLUME_QUERY_VOLUME_NUMBER, 0, 0, buffer, size)
+        return klass.create_from_string(buffer)
+
+    def ioctl_mountmgr_query_points(self, input_buffer, input_buffer_size):
+        output_buffer_size = 256
+        output_buffer = ctypes.c_buffer('\x00' * 256, 256)
+        self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_POINTS,
+                   input_buffer, input_buffer_size, output_buffer, output_buffer_size)
+        return output_buffer.value

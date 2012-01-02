@@ -102,3 +102,16 @@ DISK_SAN_POLICY = ULInt32
 
 class DISK_SAN_SETTINGS(Struct):
     _fields_ = [DISK_SAN_POLICY("SanPolicy"), ]
+
+class VOLUME_NUMBER(Struct):
+    _fields_ = [ULONG("VolumeNumber"), FixedSizeArray("VolumeManagerName", 8, WCHAR), ]
+
+USHORT = ULInt16
+
+class MOUNTMGR_MOUNT_POINT(Struct):
+    _fields_ = [ULONG("SymbolicLinkNameOffset"), USHORT("SymbolicLinkNameLength"), Padding(2),
+                ULONG("UniqueIdOffset"), USHORT("UniqueIdLength"), Padding(2),
+                ULONG("DeviceNameOffset"), USHORT("DeviceNameLength"), Padding(2)]
+
+class MOUNTMGR_MOUNT_POINTS(Struct):
+    _fields_ = [ULONG("Size"), VarSizeArray("MountPoints", ULong, MOUNTMGR_MOUNT_POINT)]

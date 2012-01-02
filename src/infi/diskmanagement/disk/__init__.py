@@ -69,6 +69,7 @@ class Volume(object):
         from infi.devicemanager.ioctl import DeviceIoControl
         return DeviceIoControl(self._setupapi_object.psuedo_device_object).storage_get_device_and_partition_number()
 
+    @cached_method
     def _get_wmi_object(self):
         from ..wmi import WmiClient, iter_volumes
         from infi.devicemanager.ioctl import DeviceIoControl
@@ -84,6 +85,26 @@ class Volume(object):
         # next step is to figure out to quickly get from the setuapi and ioctl information to the wmi object
         wmi_object = self._get_wmi_object()
         wmi_object.Format(QuickFormat=quick)
+
+    def get_volume_guid(self):
+
+        # Is there a more efficient way of getting the GUID (Not through WMI/VDS)?
+        return re.compile(r".*(?P<guid>{.*}).*").match(self._get_wmi_object().DeviceID).groupdict()['guid']
+
+    def get_moint_points(self):
+        raise NotImplementedError()
+
+    def get_drive_letter(self):
+        raise NotImplementedError()
+
+    def add_mount_point(self):
+        raise NotImplementedError()
+
+    def assign_drive_letter(self):
+        raise NotImplementedError()
+
+    def get_volume_guid(self):
+        raise NotImplementedError()
 
 class Partition(object):
     def __init__(self, disk, struct):
@@ -298,5 +319,8 @@ class Disk(object):
 
     def read_write(self):
         self._set_dist_attributes(0, constants.DISK_ATTRIBUTE_READ_ONLY)
+
+    def get_volume_number(self):
+        self._io.ioctl_volume_query_volume_number()
 
 
