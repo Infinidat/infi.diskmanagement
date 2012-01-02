@@ -34,14 +34,14 @@ class MountManager(object):
         triplet = structures.MOUNTMGR_MOUNT_POINT(SymbolicLinkNameOffset=0, SymbolicLinkNameLength=0,
                                                   UniqueIdOffset=0, UniqueIdLength=0,
                                                   DeviceNameOffset=_sizeof(structures.MOUNTMGR_MOUNT_POINT),
-                                                  DeviceNameLength=len(buffer_string))
+                                                  DeviceNameLength=len(buffer_string) - ctypes.sizeof(ctypes.c_wchar))
         triplet_string = structures.MOUNTMGR_MOUNT_POINT.write_to_string(triplet)
         input_buffer = ctypes.c_buffer(triplet_string + buffer_string, len(triplet_string) + len(buffer_string))
         return input_buffer
 
     def get_volume_guid(self, volume):
         input_buffer = self._create_input_buffer_for_query_points_ioctl(volume)
-        return self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer))
+        return self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer) + 1)
 
 class PartitionManager(object):
     def __init__(self):
