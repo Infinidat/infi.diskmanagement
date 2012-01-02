@@ -114,4 +114,4 @@ class MOUNTMGR_MOUNT_POINT(Struct):
                 ULONG("DeviceNameOffset"), USHORT("DeviceNameLength"), Padding(2)]
 
 class MOUNTMGR_MOUNT_POINTS(Struct):
-    _fields_ = [ULONG("Size"), VarSizeArray("MountPoints", ULong, MOUNTMGR_MOUNT_POINT)]
+    _fields_ = [ULONG("Size"), VarSizeArray("MountPoints", ULONG, MOUNTMGR_MOUNT_POINT)]
