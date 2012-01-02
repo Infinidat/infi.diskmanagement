@@ -46,6 +46,11 @@ class MountManager(object):
         offset, length = struct.MountPoints[0].SymbolicLinkNameOffset, struct.MountPoints[0].SymbolicLinkNameLength
         return ctypes.wstring_at(ctypes.addressof(output_buffer) + offset, length / ctypes.sizeof(ctypes.c_wchar))
 
+    def get_volume_mount_points(self, volume):
+        input_buffer = self._create_input_buffer_for_query_points_ioctl(volume)
+        output_buffer = self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer) + 1)
+        return output_buffer
+
 class PartitionManager(object):
     def __init__(self):
         super(MountManager, self).__init__()
