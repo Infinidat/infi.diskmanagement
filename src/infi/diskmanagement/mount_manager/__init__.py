@@ -25,9 +25,9 @@ class MountManager(object):
         return filter(lambda letter: getattr(struct, letter) == 0,
                       [field.name for field in struct._fields_.fields[0:26]])
 
-    def get_volume_guid(self, volume):
+    def _create_input_buffer_for_query_points_ioctl(self, volume):
         device_name = r"\Device\{}".format(volume._path.split('\\')[-1])
-        unicode_buffer = ctypes.create_unicode_buffer(device_name, len(device_name) + 1)
+        unicode_buffer = ctypes.create_unicode_buffer(device_name)
         from os.path import sep
         buffer_string = ctypes.string_at(ctypes.addressof(unicode_buffer),
                                          len(unicode_buffer) * ctypes.sizeof(ctypes.c_wchar))
@@ -36,7 +36,11 @@ class MountManager(object):
                                                   DeviceNameOffset=_sizeof(structures.MOUNTMGR_MOUNT_POINT),
                                                   DeviceNameLength=len(buffer_string))
         triplet_string = structures.MOUNTMGR_MOUNT_POINT.write_to_string(triplet)
-        input_buffer = ctypes.c_buffer(triplet_string + buffer_string)
+        input_buffer = ctypes.c_buffer(triplet_string + buffer_string, len(triplet_string) + len(buffer_string))
+        return input_buffer
+
+    def get_volume_guid(self, volume):
+        input_buffer = self._create_input_buffer_for_query_points_ioctl(volume)
         return self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer))
 
 class PartitionManager(object):
