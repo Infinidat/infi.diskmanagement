@@ -191,7 +191,7 @@ class Disk(object):
         super(Disk, self).__init__()
         self._number = disk_number
         self._path = r"\\.\PHYSICALDRIVE{}".format(self._number)
-        self._io = DeviceIoControl(self._path, False)
+        self._io = DeviceIoControl(self._path, True)
 
     def __repr__(self):
         return "Disk <{}>".format(self._path)
