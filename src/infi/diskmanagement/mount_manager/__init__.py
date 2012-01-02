@@ -47,7 +47,7 @@ class MountManager(object):
         output_buffer = self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer) + 1)
         struct = structures.MOUNTMGR_MOUNT_POINTS.create_from_string(output_buffer)
         offset, length = struct.MountPoints[0].SymbolicLinkNameOffset, struct.MountPoints[0].SymbolicLinkNameLength
-        return _slice_unicode_string_from_buffer(output_buffer, offset, length)
+        return _slice_unicode_string_from_buffer(output_buffer, offset, length).replace(r"\?", r"\\")
 
     def get_volume_drive_letter(self, volume):
         input_buffer = self._create_input_buffer_for_query_points_ioctl(volume)
