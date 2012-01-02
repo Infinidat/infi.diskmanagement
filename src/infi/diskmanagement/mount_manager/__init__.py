@@ -63,7 +63,7 @@ class MountManager(object):
         volumePathNames = create_unicode_buffer(MAX_PATH_NAMES)
         returnLength = DWORD(0)
         GetVolumePathNamesForVolumeNameW(volumeName=volume_guid, volumePathNames=volumePathNames,
-                                         bufferLength=POINTER(returnLength))
+                                         returnLength=returnLength)
         return ctypes.wstring_at(ctypes.addressof(volumePathNames), returnLength.value).split(u"\x00")
 
 class PartitionManager(object):
