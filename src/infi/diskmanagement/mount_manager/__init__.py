@@ -9,6 +9,9 @@ import ctypes
 class AVAILABLE_DRIVE_LETTERS(Struct):
     _fields_ = BitFields(*([BitField(letter, 1) for letter in ascii_uppercase] + [BitPadding(6), ]))
 
+def _slice_unicode_string_from_buffer(buffer, offset, length):
+    return ctypes.wstring_at(ctypes.addressof(buffer) + offset, length / ctypes.sizeof(ctypes.c_wchar))
+
 class MountManager(object):
     def __init__(self):
         super(MountManager, self).__init__()
@@ -44,12 +47,16 @@ class MountManager(object):
         output_buffer = self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer) + 1)
         struct = structures.MOUNTMGR_MOUNT_POINTS.create_from_string(output_buffer)
         offset, length = struct.MountPoints[0].SymbolicLinkNameOffset, struct.MountPoints[0].SymbolicLinkNameLength
-        return ctypes.wstring_at(ctypes.addressof(output_buffer) + offset, length / ctypes.sizeof(ctypes.c_wchar))
+        return _slice_unicode_string_from_buffer(output_buffer, offset, length)
 
-    def get_volume_mount_points(self, volume):
+    def get_volume_drive_letter(self, volume):
         input_buffer = self._create_input_buffer_for_query_points_ioctl(volume)
         output_buffer = self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer) + 1)
-        return output_buffer
+        struct = structures.MOUNTMGR_MOUNT_POINTS.create_from_string(output_buffer)
+        if len(struct.MountPoints != 2):
+            return None
+        offset, length = struct.MountPoints[1].SymbolicLinkNameOffset, struct.MountPoints[1].SymbolicLinkNameLength
+        return _slice_unicode_string_from_buffer(output_buffer, offset, length).split('\\')[-1][0]
 
 class PartitionManager(object):
     def __init__(self):
