@@ -26,7 +26,7 @@ class MountManager(object):
         bitmask = ctypes.windll.kernel32.GetLogicalDrives()
         struct = AVAILABLE_DRIVE_LETTERS.create_from_string(ULInt32.write_to_string(bitmask))
         return filter(lambda letter: getattr(struct, letter) == 0,
-                      [field.name for field in struct._fields_.fields[0:26]])
+                      [u"{}\\".format(field.name) for field in struct._fields_.fields[2:26]])
 
     def _create_input_buffer_for_query_points_ioctl(self, volume):
         device_name = r"\Device\{}".format(volume._path.split('\\')[-1])
@@ -65,6 +65,13 @@ class MountManager(object):
         GetVolumePathNamesForVolumeNameW(volumeName=volume_guid, volumePathNames=volumePathNames,
                                          returnLength=returnLength)
         return ctypes.wstring_at(ctypes.addressof(volumePathNames), returnLength.value - 2).split(u"\x00")
+
+    def add_volume_mount_point(self, volume, mount_point):
+        volume_guid = u"{}\\".format(self.get_volume_guid(volume))
+        SetVolumeMountPointW(create_unicode_buffer(mount_point, volume_guid))
+
+    def remove_volume_mount_point(self, volume, mount_point):
+        raise NotImplementedError()
 
 class PartitionManager(object):
     def __init__(self):
