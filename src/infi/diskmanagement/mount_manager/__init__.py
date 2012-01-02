@@ -58,6 +58,11 @@ class MountManager(object):
         offset, length = struct.MountPoints[1].SymbolicLinkNameOffset, struct.MountPoints[1].SymbolicLinkNameLength
         return _slice_unicode_string_from_buffer(output_buffer, offset, length).split('\\')[-1][0]
 
+    def get_volume_mount_points(self, volume):
+        volume_guid = self.get_volume_guid(volume)
+        volumePathNames, bufferLength, returnLength = GetVolumePathNamesForVolumeNameW(volumeName=volume_guid)
+        return volumePathNames
+
 class PartitionManager(object):
     def __init__(self):
         super(MountManager, self).__init__()
@@ -74,3 +79,28 @@ class PartitionManager(object):
         settings = structures.DISK_SAN_SETTINGS(SanPolicy=san_policy)
         return self._io.ioctl_disk_set_san_settings(settings)
 
+import infi.wioctl
+from ctypes import c_wchar_p as LPCWSTR
+from ctypes import c_wchar_p as LPWSTR
+from ctypes import c_ulong as DWORD
+from ctypes import POINTER, create_unicode_buffer
+
+MAX_PATH_NAMES = 32767
+
+class GetVolumePathNamesForVolumeNameW(infi.wioctl.api.WrappedFunction):
+    return_value = infi.wioctl.api.BOOL
+
+    @classmethod
+    def get_errcheck(cls):
+        return infi.wioctl.api.errcheck_bool()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((LPCWSTR, infi.wioctl.api.IN, "volumeName"),
+                (LPWSTR, infi.wioctl.api.IN_OUT, "volumePathNames", create_unicode_buffer(MAX_PATH_NAMES)),
+                (DWORD, infi.wioctl.api.IN, "bufferLength", DWORD(MAX_PATH_NAMES)),
+                (POINTER(DWORD), infi.wioctl.api.IN_OUT, "returnLength"), DWORD(MAX_PATH_NAMES))
