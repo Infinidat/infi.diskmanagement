@@ -36,7 +36,7 @@ class MountManager(object):
                                                   DeviceNameOffset=_sizeof(structures.MOUNTMGR_MOUNT_POINT),
                                                   DeviceNameLength=len(buffer_string))
         triplet_string = structures.MOUNTMGR_MOUNT_POINT.write_to_string(triplet)
-        input_buffer = ctypes.c_buffer(triplet_string + buffer_string, len(triplet_string) + len(buffer_string)))
+        input_buffer = ctypes.c_buffer(triplet_string + buffer_string, len(triplet_string) + len(buffer_string))
         return self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer_size))
 
 class PartitionManager(object):
