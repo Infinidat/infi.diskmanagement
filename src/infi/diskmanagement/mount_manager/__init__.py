@@ -60,7 +60,8 @@ class MountManager(object):
 
     def get_volume_mount_points(self, volume):
         volume_guid = u"{}\\".format(self.get_volume_guid(volume))
-        volumePathNames, bufferLength, returnLength = GetVolumePathNamesForVolumeNameW(volumeName=volume_guid)
+        volumePathNames = create_unicode_buffer(MAX_PATH_NAMES)
+        GetVolumePathNamesForVolumeNameW(volumeName=volume_guid, volumePathNames=volumePathNames)
         return volumePathNames
 
 class PartitionManager(object):
