@@ -210,12 +210,15 @@ class Disk(object):
 
     def _set_layout(self, layout):
         self._io.ioctl_disk_set_drive_layout_ex(layout)
-        self.wait_for_all_volumes()
         self.clear_cached_properties()
 
     def wait_for_all_volumes(self):
-        while not self._io.ioctl_disk_are_volumes_ready():
-            pass
+        from time import sleep
+        try:
+            _ = [partition.get_volume().get_volume_guid() for partition in self.get_partitions]
+        except:
+            sleep(1)
+            self.wait_for_all_volumes()
 
     def _update_layout(self):
         self._set_layout(self._get_layout())
