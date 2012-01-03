@@ -16,6 +16,10 @@ def _slice_unicode_string_from_buffer(buffer, offset, length):
 def _rstrip(string):
     return string.rstrip(u'\\')
 
+def _get_unicode_buffer(size=MAX_PATH_NAMES):
+    buffer = create_unicode_buffer(size)
+    return buffer, size
+
 class MountManager(object):
     def __init__(self):
         super(MountManager, self).__init__()
@@ -93,18 +97,14 @@ class MountManager(object):
     def disable_auto_mount(self):
         return self._io.ioctl_mountmgr_set_auto_mount(MOUNTMGR_AUTO_MOUNT_STATE_DISABLED)
 
-    def _get_unicode_buffer(self, size=MAX_PATH_NAMES):
-        buffer = create_unicode_buffer(size)
-        return buffer, size
-
     def iter_volume_guids(self):
-        buffer, length = self._get_unicode_buffer()
+        buffer, length = _get_unicode_buffer()
         search_handle = None
         try:
             search_handle = FindFirstVolumeW(buffer, length)
             yield buffer.value
             while True:
-                buffer, length = self._get_unicode_buffer()
+                buffer, length = _get_unicode_buffer()
                 FindNextVolumeW(search_handle, buffer, length)
                 yield buffer.value
         except WindowsException, e:
@@ -112,13 +112,13 @@ class MountManager(object):
                 return FindVolumeClose(search_handle)
 
     def iter_mounts_of_volume_guid(self, volume_guid):
-        buffer, length = self._get_unicode_buffer()
+        buffer, length = _get_unicode_buffer()
         search_handle = None
         try:
             search_handle = FindFirstVolumeMountPointW(volume_guid,buffer, length)
             yield buffer.value
             while True:
-                buffer, length = self._get_unicode_buffer()
+                buffer, length = _get_unicode_buffer()
                 FindNextVolumeMountPointW(search_handle, buffer, length)
                 yield buffer.value
         except WindowsException, e:
