@@ -6,7 +6,7 @@ from infi.diskmanagement import Disk, MountManager, PartitionManager
 class SixthDriveTestCase(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self._disk = Disk(7)
+        self._disk = Disk(3)
 
     @classmethod
     def setUpClass(cls):
