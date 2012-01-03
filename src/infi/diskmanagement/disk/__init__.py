@@ -210,6 +210,7 @@ class Disk(object):
 
     def _set_layout(self, layout):
         self._io.ioctl_disk_set_drive_layout_ex(layout)
+        self.wait_for_all_volumes()
         self.clear_cached_properties()
 
     def wait_for_all_volumes(self):
