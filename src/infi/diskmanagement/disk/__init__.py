@@ -96,10 +96,10 @@ class Volume(object):
         return self._mount_manager.get_volume_mount_points(self)
 
     def add_mount_point(self, mount_point):
-        return self._mount_manager.add_volume_mount_point(self, mount_point)
+        return self._mount_manager.add_volume_mount_point(self.get_volume_guid(), mount_point)
 
     def remove_mount_point(self, mount_point):
-        return self._mount_manager.remove_volume_mount_point(self, mount_point)
+        return self._mount_manager.remove_volume_mount_point(mount_point)
 
     def has_drive_letter(self):
         return self._mount_manager.get_volume_drive_letter(self) is not None
