@@ -13,6 +13,9 @@ class AVAILABLE_DRIVE_LETTERS(Struct):
 def _slice_unicode_string_from_buffer(buffer, offset, length):
     return ctypes.wstring_at(ctypes.addressof(buffer) + offset, length / ctypes.sizeof(ctypes.c_wchar))
 
+def _rstrip(string):
+    return string.rstrip(u'\\')
+
 class MountManager(object):
     def __init__(self):
         super(MountManager, self).__init__()
@@ -90,6 +93,44 @@ class MountManager(object):
     def disable_auto_mount(self):
         return self._io.ioctl_mountmgr_set_auto_mount(MOUNTMGR_AUTO_MOUNT_STATE_DISABLED)
 
+    def _get_unicode_buffer(self, size=MAX_PATH_NAMES):
+        buffer = create_unicode_buffer(size)
+        return buffer, size
+
+    def iter_volume_guids(self):
+        buffer, length = self._get_unicode_buffer()
+        search_handle = None
+        try:
+            search_handle = FindFirstVolumeW(buffer, length)
+            yield buffer.value
+            while True:
+                buffer, length = self._get_unicode_buffer()
+                FindNextVolumeW(search_handle, buffer, length)
+                yield buffer.value
+        except WindowsException, e:
+            if e.winerror == ERROR_NO_MORE_FILES and search_handle is not None:
+                return FindVolumeClose(search_handle)
+
+    def iter_mounts_of_volume_guid(self, volume_guid):
+        buffer, length = self._get_unicode_buffer()
+        search_handle = None
+        try:
+            search_handle = FindFirstVolumeMountPointW(volume_guid,buffer, length)
+            yield buffer.value
+            while True:
+                buffer, length = self._get_unicode_buffer()
+                FindNextVolumeMountPointW(search_handle, buffer, length)
+                yield buffer.value
+        except WindowsException, e:
+            if e.winerror == ERROR_NO_MORE_FILES and search_handle is not None:
+                return FindVolumeMountPointClose(search_handle)
+
+    def get_mounts_of_all_volumes(self):
+        """:returns: a dictionary with volume GUIDs as keys and list of mount points as values"""
+        return {_rstrip(volume_guid): [_rstrip(mount_point) \
+                                      for mount_point in self.iter_mounts_of_volume_guid(volume_guid)] \
+                for volume_guid in self.iter_volume_guids()}
+
 class PartitionManager(object):
     def __init__(self):
         super(MountManager, self).__init__()
@@ -163,4 +204,106 @@ class DeleteVolumeMountPointW(WrappedFunction):
     @classmethod
     def get_parameters(cls):
         return ((LPCWSTR, IN, "volumeMountPoint"),)
+
+from infi.wioctl.api import HANDLE, errcheck_invalid_handle, WindowsException
+
+class FindFirstVolumeW(WrappedFunction):
+    return_value = HANDLE
+
+    @classmethod
+    def get_errcheck(cls):
+        return errcheck_invalid_handle()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((LPCWSTR, IN_OUT, "volumeName"),
+                (DWORD, IN, "bufferLength"))
+
+class FindVolumeClose(WrappedFunction):
+    return_value = HANDLE
+
+    @classmethod
+    def get_errcheck(cls):
+        return errcheck_invalid_handle()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((HANDLE, IN, "findVolume"),)
+
+class FindNextVolumeW(WrappedFunction):
+    return_value = infi.wioctl.api.BOOL
+
+    @classmethod
+    def get_errcheck(cls):
+        return infi.wioctl.api.errcheck_bool()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((HANDLE, IN, "findVolume"),
+                (LPWSTR, IN_OUT, "volumeName"),
+                (DWORD, IN, "bufferLength"))
+
+ERROR_NO_MORE_FILES = 18
+
+class FindFirstVolumeMountPointW(WrappedFunction):
+    return_value = HANDLE
+
+    @classmethod
+    def get_errcheck(cls):
+        return errcheck_invalid_handle()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((LPWSTR, IN, "rootPathName"),
+                (LPWSTR, IN_OUT, "volumeMountPoint"),
+                (DWORD, IN, "bufferLength"))
+
+class FindVolumeMountPointClose(WrappedFunction):
+    return_value = HANDLE
+
+    @classmethod
+    def get_errcheck(cls):
+        return errcheck_invalid_handle()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((HANDLE, IN, "findVolumeMountPoint"),)
+
+class FindNextVolumeMountPointW(WrappedFunction):
+    return_value = infi.wioctl.api.BOOL
+
+    @classmethod
+    def get_errcheck(cls):
+        return infi.wioctl.api.errcheck_bool()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((HANDLE, IN, "findVolumeMountPoint"),
+                (LPWSTR, IN_OUT, "volumeMountPoint"),
+                (DWORD, IN, "bufferLength"))
+
 
