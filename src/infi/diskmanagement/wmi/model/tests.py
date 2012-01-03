@@ -1,8 +1,15 @@
 
 from infi import unittest
+import os
 from ... import wmi
 
 class WmiTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(WmiTestCase, cls).setUpClass()
+        if os.name != 'nt':
+            raise unittest.SkipTest("This test case should run only on Windows")
+
     def test_get_drives(self):
         client = wmi.WmiClient()
         drives = wmi.get_disk_drives(client)

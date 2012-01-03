@@ -3,14 +3,14 @@ from infi import unittest
 
 from infi.diskmanagement import Disk, MountManager, PartitionManager
 
-class SixthDriveTestCase(unittest):
+class SixthDriveTestCase(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         self._disk = Disk(7)
 
     @classmethod
     def setUpClass(cls):
-        super(FirstDriveLayoutTestCase, cls).setUpClass()
+        super(SixthDriveTestCase, cls).setUpClass()
         if socket.gethostname() != 'host-ci38':
             raise unittest.SkipTest("This test case should run only on host-ci38")
 
