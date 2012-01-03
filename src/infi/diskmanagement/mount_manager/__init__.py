@@ -22,7 +22,6 @@ class MountManager(object):
         return "MountManager <{}>".format(self._path)
 
     def get_avaialable_drive_letters(self):
-        import ctypes
         bitmask = ctypes.windll.kernel32.GetLogicalDrives()
         struct = AVAILABLE_DRIVE_LETTERS.create_from_string(ULInt32.write_to_string(bitmask))
         return filter(lambda letter: getattr(struct, letter) == 0,

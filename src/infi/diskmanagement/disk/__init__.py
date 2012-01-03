@@ -5,6 +5,7 @@ from infi.pyutils.decorators import wraps
 from ..ioctl import DeviceIoControl, generate_signature, generate_guid, structures, constants
 from ..ioctl.constants import PARTITION_STYLE_MBR, PARTITION_STYLE_GPT, PARTITION_STYLE_RAW
 from infi.diskmanagement.ioctl import GUID_ZERO
+from ..mount_manager import MountManager
 
 def is_zero(large_integer):
     """:returns: if the value of LARGE_INTEGER is zero"""
@@ -45,6 +46,7 @@ class Volume(object):
         self._disk = disk
         self._partition = partition
         self._io = DeviceIoControl(self._path, False)
+        self._mount_manager = MountManager()
 
     @property
     @cached_method
@@ -87,20 +89,25 @@ class Volume(object):
         wmi_object.Format(QuickFormat=quick)
 
     def get_volume_guid(self):
-        from ..mount_manager import MountManager
-        return MountManager().get_volume_guid(self)
+        return self._mount_manager.get_volume_guid(self)
 
     def get_moint_points(self):
-        from ..mount_manager import MountManager
-        return MountManager().get_volume_mount_points(self)
+        return self._mount_manager.get_volume_mount_points(self)
 
     def add_mount_point(self, mount_point):
-        from ..mount_manager import MountManager
-        return MountManager().add_volume_mount_point(self, mount_point)
+        return self._mount_manager.add_volume_mount_point(self, mount_point)
 
     def remove_mount_point(self, mount_point):
-        from ..mount_manager import MountManager
-        return MountManager().remove_volume_mount_point(self, mount_point)
+        return self._mount_manager.remove_volume_mount_point(self, mount_point)
+
+    def has_drive_letter(self):
+        return self._mount_manager.get_volume_drive_letter(self) is not None
+
+    def get_available_drive_letters(self):
+        return self._mount_manager.get_avaialable_drive_letters()
+
+    def assign_first_available_drive_letter(self):
+        return self.add_mount_point(self.get_available_drive_letters()[0])
 
 class Partition(object):
     def __init__(self, disk, struct):
@@ -234,7 +241,8 @@ class Disk(object):
         clear_cache(self)
 
     def _has_extended_partition(self):
-        return len(self._get_layout().PartitionEntry) >= 3 and not is_zero(self._get_layout().PartitionEntry[3].PartitionLength)
+        return len(self._get_layout().PartitionEntry) >= 3 and \
+               not is_zero(self._get_layout().PartitionEntry[3].PartitionLength)
 
     def _iter_partitions_mbr(self):
         for struct in self._get_layout().PartitionEntry[0:3]:

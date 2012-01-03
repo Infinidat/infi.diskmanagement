@@ -1,6 +1,10 @@
 
-from infi.wioctl.structures import *
-from infi.instruct import  StructFunc, SelectStructByFunc, VarSizeArray, ReadPointer, Padding
+from infi.wioctl.structures import ULInt32, ULInt64, Struct, UCHAR, BOOLEAN, ULONG, Field, FixedSizeArray
+from infi.wioctl.structures import ULONG64, GUID, WCHAR, LARGE_INTEGER, ULInt16
+
+from infi.instruct import  SelectStructByFunc, VarSizeArray, ReadPointer, Padding
+
+# pylint: disable=C0103,W0212,W0201
 
 PARTITION_STYLE = ULInt32
 ULONGLONG = ULInt64

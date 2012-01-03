@@ -4,6 +4,8 @@ import infi.wioctl
 from . import constants
 from . import structures
 
+# pylint: disable=W0622
+
 def _sizeof(struct):
     return struct.min_max_sizeof().max
 

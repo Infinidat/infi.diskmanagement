@@ -1,5 +1,7 @@
 import types, sys, os
 
+#pylint: disable=ALL
+
 # comtypes version numbers follow the setuptools convention:
 # http://peak.telecommunity.com/DevCenter/setuptools#specifying-your-project-s-version
 # 0.6.0dev < 0.6.0a < 0.6.0.b < 0.6.0c < 0.6.0
@@ -128,9 +130,9 @@ CLSCTX = tagCLSCTX
 _ole32 = oledll.ole32
 _ole32_nohresult = windll.ole32 # use this for functions that don't return a HRESULT
 
-COINIT_MULTITHREADED     = 0x0
+COINIT_MULTITHREADED = 0x0
 COINIT_APARTMENTTHREADED = 0x2
-COINIT_DISABLE_OLE1DDE   = 0x4
+COINIT_DISABLE_OLE1DDE = 0x4
 COINIT_SPEED_OVER_MEMORY = 0x8
 
 def CoInitialize():
@@ -430,11 +432,11 @@ class _cominterface_meta(type):
                     properties.setdefault((name, nargs), [None, None, None])[0] = method
                     is_prop = True
                 elif 'propput' in idlflags:
-                    nargs = len(argspec)-1
+                    nargs = len(argspec) - 1
                     properties.setdefault((name, nargs), [None, None, None])[1] = method
                     is_prop = True
                 elif 'propputref' in idlflags:
-                    nargs = len(argspec)-1
+                    nargs = len(argspec) - 1
                     properties.setdefault((name, nargs), [None, None, None])[2] = method
                     is_prop = True
                 else:
@@ -655,7 +657,7 @@ class _cominterface_meta(type):
 
             if paramflags:
                 # see comment in the _fix_inout_args method
-                dirflags = [(p[0]&3) for p in paramflags]
+                dirflags = [(p[0] & 3) for p in paramflags]
                 if 3 in dirflags:
 ##                    fullname = "%s::%s" % (self.__name__, name)
 ##                    print "FIX %s" % fullname
@@ -1093,7 +1095,7 @@ class IPersist(IUnknown):
     _idlflags_ = []
     _methods_ = [
         COMMETHOD([], HRESULT, 'GetClassID',
-                  ( ['out'], POINTER(GUID), 'pClassID' )),
+                  (['out'], POINTER(GUID), 'pClassID')),
         ]
 
 class IServiceProvider(IUnknown):
@@ -1108,9 +1110,9 @@ class IServiceProvider(IUnknown):
 
     _methods_ = [
         COMMETHOD([], HRESULT, 'QueryService',
-                  ( ['in'], POINTER(GUID), 'guidService' ),
-                  ( ['in'], POINTER(GUID), 'riid' ),
-                  ( ['in'], POINTER(c_void_p), 'ppvObject' ))
+                  (['in'], POINTER(GUID), 'guidService'),
+                  (['in'], POINTER(GUID), 'riid'),
+                  (['in'], POINTER(c_void_p), 'ppvObject'))
         ]
 
 ################################################################
@@ -1234,7 +1236,7 @@ def CoCreateInstanceEx(clsid, interface=None,
     pointer to an interface, possibly on another machine.
     """
     if clsctx is None:
-        clsctx=CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER
+        clsctx = CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER
     if machine:
         serverinfo = COSERVERINFO()
         serverinfo.pwszName = machine

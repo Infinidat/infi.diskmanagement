@@ -1,6 +1,7 @@
 import unittest
 import ctypes
 
+# pylint: disable=W0614,R0904,W0401,W0622
 from .structures import *
 from .constants import PARTITION_STYLE_MBR, PARTITION_STYLE_GPT
 
