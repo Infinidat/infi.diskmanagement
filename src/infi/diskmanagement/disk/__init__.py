@@ -7,6 +7,7 @@ from ..ioctl.constants import PARTITION_STYLE_MBR, PARTITION_STYLE_GPT, PARTITIO
 from infi.diskmanagement.ioctl import GUID_ZERO
 from infi.wioctl.structures import is_64bit
 from ..mount_manager import MountManager
+from infi.devicemanager import DeviceManager
 
 def is_zero(large_integer):
     """:returns: if the value of LARGE_INTEGER is zero"""
@@ -59,7 +60,6 @@ class Volume(object):
 
     @classmethod
     def get_from_disk_and_partition(cls, disk, partition):
-        from infi.devicemanager import DeviceManager
         from infi.devicemanager.ioctl import DeviceIoControl
         expected = disk._number, partition._struct.PartitionNumber
         def _filter(volume):
@@ -68,7 +68,6 @@ class Volume(object):
         return Volume(filter(_filter, DeviceManager().volumes)[0], disk, partition)
 
     def _get_device_number(self):
-        from infi.devicemanager import DeviceManager
         from infi.devicemanager.ioctl import DeviceIoControl
         return DeviceIoControl(self._setupapi_object.psuedo_device_object).storage_get_device_and_partition_number()
 
@@ -212,6 +211,7 @@ class Disk(object):
     def _set_layout(self, layout):
         self._io.ioctl_disk_set_drive_layout_ex(layout)
         self.clear_cached_properties()
+        DeviceManager().root.rescan()
 
     def _update_layout(self):
         self._set_layout(self._get_layout())
