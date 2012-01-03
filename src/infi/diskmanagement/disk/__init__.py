@@ -5,6 +5,7 @@ from infi.pyutils.decorators import wraps
 from ..ioctl import DeviceIoControl, generate_signature, generate_guid, structures, constants
 from ..ioctl.constants import PARTITION_STYLE_MBR, PARTITION_STYLE_GPT, PARTITION_STYLE_RAW
 from infi.diskmanagement.ioctl import GUID_ZERO
+from infi.wioctl.structures import is_64bit
 from ..mount_manager import MountManager
 
 def is_zero(large_integer):
@@ -19,7 +20,7 @@ partitions_in_use_lambda = lambda partition: not is_zero(partition.PartitionLeng
 
 def to_large_integer(number):
     kwargs = {}
-    if structures.is_64bit():
+    if is_64bit():
         kwargs['QuadPart'] = number
     else:
         kwargs['HighPart'] = (number & 0xFFFFFFFF00000000) >> 32
@@ -28,7 +29,7 @@ def to_large_integer(number):
     return instance
 
 def from_large_integer(instance):
-    return instance.QuadPart if structures.is_64bit() else instance.HighPart << 32 + instance.LowPart
+    return instance.QuadPart if is_64bit() else instance.HighPart << 32 + instance.LowPart
 
 def partition_type_specific(func):
     @wraps(func)

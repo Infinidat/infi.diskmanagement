@@ -157,3 +157,17 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_POINTS,
                    input_buffer, input_buffer_size, output_buffer, output_buffer_size)
         return output_buffer
+
+    def ioctl_mountmgr_query_auto_mount(self):
+        klass = structures.MOUNTMGR_QUERY_AUTO_MOUNT
+        size = _sizeof(klass)
+        buffer = ctypes.c_buffer('\x00' * size, size)
+        self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_AUTO_MOUNT, 0, 0, buffer, size)
+        return klass.create_from_string(buffer).CurrentState
+
+    def ioctl_mountmgr_set_auto_mount(self, state):
+        klass = structures.MOUNTMGR_SET_AUTO_MOUNT
+        size = _sizeof(klass)
+        buffer = ctypes.c_buffer(klass.write_to_string(klass(NewState=state)))
+        self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_SET_AUTO_MOUNT, buffer, size, 0, 0)
+

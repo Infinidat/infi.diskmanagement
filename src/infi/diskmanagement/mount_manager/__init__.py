@@ -1,6 +1,7 @@
 
 from ..ioctl import DeviceIoControl, generate_signature, generate_guid, structures, constants
 from ..ioctl.constants import PARTITION_STYLE_MBR, PARTITION_STYLE_GPT, PARTITION_STYLE_RAW
+from ..ioctl.constants import MOUNTMGR_AUTO_MOUNT_STATE_DISABLED, MOUNTMGR_AUTO_MOUNT_STATE_ENABLED
 from infi.diskmanagement.ioctl import GUID_ZERO, _sizeof
 from infi.instruct import Struct, BitFields, BitField, BitPadding, ULInt32
 from string import ascii_uppercase
@@ -24,8 +25,8 @@ class MountManager(object):
     def get_avaialable_drive_letters(self):
         bitmask = ctypes.windll.kernel32.GetLogicalDrives()
         struct = AVAILABLE_DRIVE_LETTERS.create_from_string(ULInt32.write_to_string(bitmask))
-        return filter(lambda letter: getattr(struct, letter) == 0,
-                      [u"{}\\".format(field.name) for field in struct._fields_.fields[2:26]])
+        return [u"{}:\\".format(letter) for letter in filter(lambda letter: getattr(struct, letter) == 0,
+                                             [field.name for field in struct._fields_.fields[2:26]])]
 
     def _create_input_buffer_for_query_points_ioctl(self, volume):
         device_name = r"\Device\{}".format(volume._path.split('\\')[-1])
@@ -63,11 +64,12 @@ class MountManager(object):
         returnLength = DWORD(0)
         GetVolumePathNamesForVolumeNameW(volumeName=volume_guid, volumePathNames=volumePathNames,
                                          returnLength=returnLength)
-        return ctypes.wstring_at(ctypes.addressof(volumePathNames), returnLength.value - 2).split(u"\x00")
+        return filter(lambda string: string != u'',
+                      ctypes.wstring_at(ctypes.addressof(volumePathNames), returnLength.value).split(u"\x00"))
 
     def add_volume_mount_point(self, volume, mount_point):
         volume_guid = u"{}\\".format(self.get_volume_guid(volume))
-        SetVolumeMountPointW(create_unicode_buffer(mount_point, volume_guid))
+        SetVolumeMountPointW(create_unicode_buffer(mount_point), create_unicode_buffer(volume_guid))
 
     def remove_volume_mount_point(self, volume, mount_point):
         if not mount_point.endswith('\\'):
@@ -75,6 +77,15 @@ class MountManager(object):
         mount_points = self.get_volume_mount_points(volume)
         assert mount_point in mount_points, "{} is not a mount point of {!r}".format(mount_point, volume)
         DeleteVolumeMountPointW(create_unicode_buffer(mount_point))
+
+    def is_auto_mount(self):
+        return self._io.ioctl_mountmgr_query_auto_mount() == MOUNTMGR_AUTO_MOUNT_STATE_ENABLED
+
+    def enable_auto_mount(self):
+        return self._io.ioctl_mountmgr_set_auto_mount(MOUNTMGR_AUTO_MOUNT_STATE_ENABLED)
+
+    def disable_auto_mount(self):
+        return self._io.ioctl_mountmgr_set_auto_mount(MOUNTMGR_AUTO_MOUNT_STATE_DISABLED)
 
 class PartitionManager(object):
     def __init__(self):

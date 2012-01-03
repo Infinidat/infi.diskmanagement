@@ -119,3 +119,12 @@ class MOUNTMGR_MOUNT_POINT(Struct):
 
 class MOUNTMGR_MOUNT_POINTS(Struct):
     _fields_ = [ULONG("Size"), VarSizeArray("MountPoints", ULONG, MOUNTMGR_MOUNT_POINT)]
+
+MOUNTMGR_AUTO_MOUNT_STATE = ULInt32
+
+class MOUNTMGR_QUERY_AUTO_MOUNT(Struct):
+    _fields_ = [MOUNTMGR_AUTO_MOUNT_STATE("CurrentState"), ]
+
+class MOUNTMGR_SET_AUTO_MOUNT(Struct):
+    _fields_ = [MOUNTMGR_AUTO_MOUNT_STATE("NewState"), ]
+

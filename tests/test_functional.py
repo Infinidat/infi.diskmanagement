@@ -23,3 +23,4 @@ class SixthDriveTestCase(unittest.TestCase):
         self.assertFalse(volume.has_drive_letter())
         volume.assign_first_available_drive_letter()
         self.assertTrue(volume.has_drive_letter())
+
