@@ -216,7 +216,7 @@ class Disk(object):
     def wait_for_all_volumes(self):
         from time import sleep
         try:
-            _ = [partition.get_volume().get_volume_guid() for partition in self.get_partitions]
+            _ = [partition.get_volume().get_volume_guid() for partition in self.get_partitions()]
         except:
             sleep(1)
             self.wait_for_all_volumes()
