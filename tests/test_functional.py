@@ -14,10 +14,6 @@ class SixthDriveTestCase(unittest.TestCase):
         if socket.gethostname() != 'host-ci38':
             raise unittest.SkipTest("This test case should run only on host-ci38")
 
-    def setUp(self):
-        unittest.TestCase.setUp(self)
-        self._disk = Disk(0)
-
     def test_uber(self):
         self._disk.destroy_partition_table()
         self._disk.create_partition_table('mbr')
