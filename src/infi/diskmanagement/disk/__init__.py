@@ -83,11 +83,11 @@ class Volume(object):
             return actual == expected
         return filter(_filter, iter_volumes(client))[0]
 
-    def format(self, quick=True):
+    def format(self, quick=True, file_system="NTFS"):
         # TODO the idea is to do only the formatting through wmi
         # next step is to figure out to quickly get from the setuapi and ioctl information to the wmi object
         wmi_object = self._get_wmi_object()
-        wmi_object.Format(QuickFormat=quick)
+        wmi_object.Format(QuickFormat=quick, FileSystem=file_system)
 
     def get_volume_guid(self):
         return self._mount_manager.get_volume_guid(self)
