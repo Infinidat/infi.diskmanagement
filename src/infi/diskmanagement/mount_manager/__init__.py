@@ -7,6 +7,8 @@ from infi.instruct import Struct, BitFields, BitField, BitPadding, ULInt32
 from string import ascii_uppercase
 import ctypes
 
+MAX_PATH_NAMES = 32767
+
 class AVAILABLE_DRIVE_LETTERS(Struct):
     _fields_ = BitFields(*([BitField(letter, 1) for letter in ascii_uppercase] + [BitPadding(6), ]))
 
@@ -68,7 +70,6 @@ class MountManager(object):
     def get_volume_mount_points(self, volume_guid):
         if not volume_guid.endswith('\\'):
             volume_guid = u"{}\\".format(volume_guid)
-        volume_guid = u"{}\\".format(self.get_volume_guid(volume))
         volumePathNames = create_unicode_buffer(MAX_PATH_NAMES)
         returnLength = DWORD(0)
         GetVolumePathNamesForVolumeNameW(volumeName=volume_guid, volumePathNames=volumePathNames,
@@ -102,33 +103,22 @@ class MountManager(object):
         search_handle = None
         try:
             search_handle = FindFirstVolumeW(buffer, length)
-            yield buffer.value
+            if buffer.value:
+                yield buffer.value
             while True:
-                buffer, length = _get_unicode_buffer()
+                if buffer.value:
+                    yield buffer.value
                 FindNextVolumeW(search_handle, buffer, length)
-                yield buffer.value
         except WindowsException, e:
-            if e.winerror == ERROR_NO_MORE_FILES and search_handle is not None:
-                return FindVolumeClose(search_handle)
-
-    def iter_mounts_of_volume_guid(self, volume_guid):
-        buffer, length = _get_unicode_buffer()
-        search_handle = None
-        try:
-            search_handle = FindFirstVolumeMountPointW(volume_guid,buffer, length)
-            yield buffer.value
-            while True:
-                buffer, length = _get_unicode_buffer()
-                FindNextVolumeMountPointW(search_handle, buffer, length)
-                yield buffer.value
-        except WindowsException, e:
-            if e.winerror == ERROR_NO_MORE_FILES and search_handle is not None:
-                return FindVolumeMountPointClose(search_handle)
+            if e.winerror != ERROR_NO_MORE_FILES:
+                raise
+        finally:
+            if search_handle is not None:
+                FindVolumeClose(search_handle)
 
     def get_mounts_of_all_volumes(self):
         """:returns: a dictionary with volume GUIDs as keys and list of mount points as values"""
-        return {_rstrip(volume_guid): [_rstrip(mount_point) \
-                                      for mount_point in self.iter_mounts_of_volume_guid(volume_guid)] \
+        return {_rstrip(volume_guid): self.get_volume_mount_points(volume_guid) \
                 for volume_guid in self.iter_volume_guids()}
 
 class PartitionManager(object):
@@ -153,8 +143,6 @@ from ctypes import c_wchar_p as LPCWSTR
 from ctypes import c_wchar_p as LPWSTR
 from ctypes import c_ulong as DWORD
 from ctypes import POINTER, create_unicode_buffer
-
-MAX_PATH_NAMES = 32767
 
 class GetVolumePathNamesForVolumeNameW(WrappedFunction):
     return_value = infi.wioctl.api.BOOL
