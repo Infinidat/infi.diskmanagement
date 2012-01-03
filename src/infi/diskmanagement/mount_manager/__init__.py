@@ -58,7 +58,9 @@ class MountManager(object):
         offset, length = struct.MountPoints[1].SymbolicLinkNameOffset, struct.MountPoints[1].SymbolicLinkNameLength
         return _slice_unicode_string_from_buffer(output_buffer, offset, length).split('\\')[-1][0]
 
-    def get_volume_mount_points(self, volume):
+    def get_volume_mount_points(self, volume_guid):
+        if not volume_guid.endswith('\\'):
+            volume_guid = u"{}\\".format(volume_guid)
         volume_guid = u"{}\\".format(self.get_volume_guid(volume))
         volumePathNames = create_unicode_buffer(MAX_PATH_NAMES)
         returnLength = DWORD(0)
@@ -67,11 +69,14 @@ class MountManager(object):
         return filter(lambda string: string != u'',
                       ctypes.wstring_at(ctypes.addressof(volumePathNames), returnLength.value).split(u"\x00"))
 
-    def add_volume_mount_point(self, volume, mount_point):
-        volume_guid = u"{}\\".format(self.get_volume_guid(volume))
+    def add_volume_mount_point(self, volume_guid, mount_point):
+        if not volume_guid.endswith('\\'):
+            volume_guid = u"{}\\".format(volume_guid)
         SetVolumeMountPointW(create_unicode_buffer(mount_point), create_unicode_buffer(volume_guid))
 
-    def remove_volume_mount_point(self, volume, mount_point):
+    def remove_volume_mount_point(self, volume_guid, mount_point):
+        if not volume_guid.endswith('\\'):
+            volume_guid = u"{}\\".format(volume_guid)
         if not mount_point.endswith('\\'):
             mount_point = u"{}\\".format(mount_point)
         mount_points = self.get_volume_mount_points(volume)
