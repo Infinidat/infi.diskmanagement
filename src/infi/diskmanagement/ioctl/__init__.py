@@ -171,3 +171,16 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         buffer = ctypes.c_buffer(klass.write_to_string(klass(NewState=state)))
         self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_SET_AUTO_MOUNT, buffer, size, 0, 0)
 
+    def ioctl_disk_are_volumes_ready(self):
+        # If the operation completes successfully
+        # indicating that all volumes on the disk are ready for use, 
+        # DeviceIoControl returns a nonzero value.
+        # If the operation fails or is pending, DeviceIoControl returns zero. 
+
+        try:
+            self.ioctl(infi.wioctl.constants.IOCTL_DISK_ARE_VOLUMES_READY, 0, 0, 0, 0)
+            return True
+        except infi.wioctl.api.WindowsException, e:
+            pass
+        return False
+
