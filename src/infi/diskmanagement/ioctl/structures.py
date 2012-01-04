@@ -105,7 +105,7 @@ class SET_DISK_ATTRIBUTES(Struct):
 DISK_SAN_POLICY = ULInt32
 
 class DISK_SAN_SETTINGS(Struct):
-    _fields_ = [DISK_SAN_POLICY("SanPolicy"), ]
+    _fields_ = [ULONG("Version"), DISK_SAN_POLICY("SanPolicy"), ]
 
 class VOLUME_NUMBER(Struct):
     _fields_ = [ULONG("VolumeNumber"), FixedSizeArray("VolumeManagerName", 8, WCHAR), ]
