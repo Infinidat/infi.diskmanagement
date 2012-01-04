@@ -123,7 +123,7 @@ class MountManager(object):
 
 class PartitionManager(object):
     def __init__(self):
-        super(MountManager, self).__init__()
+        super(PartitionManager, self).__init__()
         self._path = r"\\.\PartmgrControl"
         self._io = DeviceIoControl(self._path, True)
 
