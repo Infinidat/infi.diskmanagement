@@ -123,7 +123,7 @@ class MountManager(object):
 
 class PartitionManager(object):
     def __init__(self):
-        super(PartitionManager, self).__init__()
+        super(MountManager, self).__init__()
         self._path = r"\\.\PartmgrControl"
         self._io = DeviceIoControl(self._path, True)
 
@@ -134,7 +134,8 @@ class PartitionManager(object):
         return self._io.ioctl_disk_get_san_settings().SanPolicy
 
     def set_san_policy(self, san_policy):
-        settings = structures.DISK_SAN_SETTINGS(SanPolicy=san_policy)
+        version = self._io.ioctl_disk_get_san_settings().Version
+        settings = structures.DISK_SAN_SETTINGS(Version=version, SanPolicy=san_policy)
         return self._io.ioctl_disk_set_san_settings(settings)
 
 import infi.wioctl
