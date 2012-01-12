@@ -5,7 +5,7 @@ from infi.pyutils.decorators import wraps
 from ..ioctl import DeviceIoControl, generate_signature, generate_guid, structures, constants
 from ..ioctl.constants import PARTITION_STYLE_MBR, PARTITION_STYLE_GPT, PARTITION_STYLE_RAW
 from infi.diskmanagement.ioctl import GUID_ZERO
-from infi.wioctl.structures import is_64bit
+from infi.wioctl.structures import is_64bit, GUID
 from ..mount_manager import MountManager
 from infi.devicemanager import DeviceManager
 
@@ -14,6 +14,16 @@ def is_zero(large_integer):
     if len(large_integer._fields_) == 1:
         return large_integer.QuadPart == 0
     return large_integer.LowPart == 0 and large_integer.HighPart == 0
+
+# http://msdn.microsoft.com/en-us/windows/hardware/gg463525
+PARTITION_BASIC_DATA_GUID = GUID(Data1=0xEBD0A0A2L, Data2=0xB9E5, Data3=0x4433,
+                                 Data4=[0x87, 0xC0, 0x68, 0xB6, 0xB7, 0x26, 0x99, 0xC7])
+PARTITION_MSFT_RESERVED_GUID = GUID(Data1=0xE3C9E316L, Data2=0x0B5C, Data3=0x4DB8,
+                                    Data4=[0x81, 0x7D, 0xF9, 0x2D, 0xF0, 0x02, 0x15, 0xAE])
+PARTITION_MSFT_RESERVED_STARTING_OFFSET = 17408
+PARTITION_MSFT_RESERVED_SIZE_MIN = 32 * 1024 * 1024
+PARTITION_MSFT_RESERVED_SIZE_MAX = 128 * 1024 * 1024
+PARTITION_MSFT_RESERVED_BAR = 16 * 1024 * 1024 * 1024
 
 # Windows returns empty partition entries from the partition table.
 # This lambda-function that returns True if the partition is not empty, i.e. in use
@@ -174,7 +184,7 @@ class Partition(object):
         disk._update_layout()
 
     @classmethod
-    def create_guid(cls, disk, index=1, start_offset_in_bytes=32832, size_in_bytes=None):
+    def create_guid(cls, disk, index, start_offset_in_bytes, size_in_bytes):
         """:param size: if size_in_bytes is None, the partition will be for the entire disk
         :param offset: either a number or Capacity
         :param size_in_bytes: """
@@ -183,7 +193,7 @@ class Partition(object):
                                 to_large_integer(start_offset_in_bytes),
                                 to_large_integer(disk.get_size_in_bytes() - 65 * 1024 * 1024 \
                                                  if size_in_bytes is None else size_in_bytes))
-        partition.union.PartitionType = generate_guid()
+        partition.union.PartitionType = PARTITION_BASIC_DATA_GUID
         partition.union.PartitionId = generate_guid()
         partition.union.Attributes = 0
         partition.union.Name = [0, ]*36
@@ -294,6 +304,9 @@ class Disk(object):
     def _create_partition_table_gpt(self):
         guid = generate_guid()
         self._io.ioctl_disk_create_disk(partition_style=PARTITION_STYLE_GPT)
+        size_in_bytes = PARTITION_MSFT_RESERVED_SIZE_MIN if self.get_size_in_bytes() < PARTITION_MSFT_RESERVED_BAR \
+                        else PARTITION_MSFT_RESERVED_SIZE_MAX
+        Partition.create_guid(self, 1, PARTITION_MSFT_RESERVED_STARTING_OFFSET, size_in_bytes)
 
     def create_partition_table(self, type_name):
         """:param type_name: either 'gpt' or 'mbr'"""
@@ -301,8 +314,12 @@ class Disk(object):
         self.clear_cached_properties()
 
     def create_first_partition(self):
-        create_method = Partition.create_guid if self.is_gpt() else Partition.create_primary
-        create_method(self)
+        if self.is_mbr():
+            Partition.create_primary(self)
+        elif self.is_gpt():
+            offset_in_bytes = 33 * 1024 * 1024
+            size_in_bytes = self.get_size_in_bytes() - offset_in_bytes
+            Partition.create_guid(self, 2, PARTITION_BASIC_DATA_GUID, offset_in_bytes, size_in_bytes)
 
     def is_offline(self):
         return self._io.ioctl_disk_get_disk_attributes().Attributes & constants.DISK_ATTRIBUTE_OFFLINE
