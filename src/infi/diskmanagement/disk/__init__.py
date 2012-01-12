@@ -184,7 +184,7 @@ class Partition(object):
         disk._update_layout()
 
     @classmethod
-    def create_guid(cls, disk, index, start_offset_in_bytes, size_in_bytes):
+    def create_guid(cls, disk, index, partition_type_guid, start_offset_in_bytes, size_in_bytes):
         """:param size: if size_in_bytes is None, the partition will be for the entire disk
         :param offset: either a number or Capacity
         :param size_in_bytes: """
@@ -193,7 +193,7 @@ class Partition(object):
                                 to_large_integer(start_offset_in_bytes),
                                 to_large_integer(disk.get_size_in_bytes() - 65 * 1024 * 1024 \
                                                  if size_in_bytes is None else size_in_bytes))
-        partition.union.PartitionType = PARTITION_BASIC_DATA_GUID
+        partition.union.PartitionType = partition_type_guid
         partition.union.PartitionId = generate_guid()
         partition.union.Attributes = 0
         partition.union.Name = [0, ]*36
