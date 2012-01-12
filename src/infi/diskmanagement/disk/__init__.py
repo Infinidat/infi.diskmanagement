@@ -306,7 +306,8 @@ class Disk(object):
         self._io.ioctl_disk_create_disk(partition_style=PARTITION_STYLE_GPT)
         size_in_bytes = PARTITION_MSFT_RESERVED_SIZE_MIN if self.get_size_in_bytes() < PARTITION_MSFT_RESERVED_BAR \
                         else PARTITION_MSFT_RESERVED_SIZE_MAX
-        Partition.create_guid(self, 1, PARTITION_MSFT_RESERVED_STARTING_OFFSET, size_in_bytes)
+        Partition.create_guid(self, 1, PARTITION_MSFT_RESERVED_GUID,
+                              PARTITION_MSFT_RESERVED_STARTING_OFFSET, size_in_bytes)
 
     def create_partition_table(self, type_name):
         """:param type_name: either 'gpt' or 'mbr'"""
