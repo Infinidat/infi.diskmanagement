@@ -119,6 +119,12 @@ class Volume(object):
     def assign_first_available_drive_letter(self):
         return self.add_mount_point(self.get_available_drive_letters()[0])
 
+    def online(self):
+        return DeviceIoControl(self._path, True, False).ioctl_volume_online()
+
+    def offline(self):
+        return DeviceIoControl(self._path, True, False).ioctl_volume_offline()
+
 class Partition(object):
     def __init__(self, disk, struct):
         super(Partition, self).__init__()
