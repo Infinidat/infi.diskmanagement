@@ -95,6 +95,7 @@ class Volume(object):
     def format(self, quick=True, file_system="NTFS"):
         # TODO the idea is to do only the formatting through wmi
         # next step is to figure out to quickly get from the setuapi and ioctl information to the wmi object
+        self.online()
         wmi_object = self._get_wmi_object()
         wmi_object.Format(QuickFormat=quick, FileSystem=file_system)
 
