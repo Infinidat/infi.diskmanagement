@@ -34,8 +34,10 @@ class Volume(WmiObject):
 
     def Format(self, ClusterSize=0, EnableCompression=False, FileSystem="NTFS", QuickFormat=True):
         method = self._object.Methods_("Format")
-        method.InParameters.ClusterSize = ClusterSize
-        method.InParameters.EnableCompression = EnableCompression
-        method.InParameters.Filesystem = FileSystem
-        method.InParameters.QuickFormat = QuickFormat
-        _ = self._object.ExecMethod_(method.Name, method.InParameters)
+        parameters = method.InParameters.SpawnInstance_()
+        parameters.Properties_.Items("ClusterSize").Value = ClusterSize
+        parameters.Properties_.Items("EnableCompression").Value = EnableCompression
+        parameters.Properties_.Items("FileSystem").Value = FileSystem
+        parameters.Properties_.Items("QuickFormat").Value = QuickFormat
+        _ = self._object.ExecMethod_(method.Name, parameters)
+

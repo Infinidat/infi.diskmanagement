@@ -1,7 +1,7 @@
 __import__("pkg_resources").declare_namespace(__name__)
 
 import re
-from .interface import WmiClient, WmiObject
+from infi.wmi import WmiClient, WmiObject
 from .model import DiskDrive, DiskPartition, DISKDRIVES_QUERY, DISKPARTITION_QUERY
 from .model import DISKDRIVE_TO_DISKPARTITIONS_QUERY
 
