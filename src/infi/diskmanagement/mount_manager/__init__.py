@@ -82,10 +82,10 @@ class MountManager(object):
             volume_guid = u"{}\\".format(volume_guid)
         SetVolumeMountPointW(create_unicode_buffer(mount_point), create_unicode_buffer(volume_guid))
 
-    def remove_mount_point(self, mount_point):
+    def remove_mount_point(self, volume_guid, mount_point):
         if not mount_point.endswith('\\'):
             mount_point = u"{}\\".format(mount_point)
-        mount_points = self.get_volume_mount_points(volume)
+        mount_points = self.get_volume_mount_points(volume_guid)
         assert mount_point in mount_points, "{} is not a mount point".format(mount_point)
         DeleteVolumeMountPointW(create_unicode_buffer(mount_point))
 
