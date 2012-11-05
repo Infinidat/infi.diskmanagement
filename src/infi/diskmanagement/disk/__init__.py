@@ -325,7 +325,8 @@ class Disk(object):
         if self.is_mbr():
             Partition.create_primary(self)
         elif self.is_gpt():
-            offset_in_bytes = 33 * 1024 * 1024
+            reserved_partition_size = from_large_integer(self._get_layout().PartitionEntry[0].PartitionLength)
+            offset_in_bytes = reserved_partition_size + (1024 * 1024)
             size_in_bytes = self.get_size_in_bytes() - offset_in_bytes
             Partition.create_guid(self, 2, PARTITION_BASIC_DATA_GUID, offset_in_bytes, size_in_bytes)
 
