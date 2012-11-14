@@ -75,7 +75,10 @@ class Volume(object):
         def _filter(volume):
             actual = DeviceIoControl(volume.psuedo_device_object).storage_get_device_and_partition_number()
             return actual == expected
-        return Volume(filter(_filter, DeviceManager().volumes)[0], disk, partition)
+        matching_volumes = filter(_filter, DeviceManager().volumes)
+        if len(matching_volumes) == 0:
+            return None
+        return Volume(matching_volumes[0], disk, partition)
 
     def _get_device_number(self):
         from infi.devicemanager.ioctl import DeviceIoControl
