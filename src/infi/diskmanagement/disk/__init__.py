@@ -80,7 +80,7 @@ class Volume(object):
             return actual == expected
         volumes = DeviceManager().volumes
         logger.debug("Existing volumes: {!r}".format(volumes))
-        matching_volumes = filter(_filter, )
+        matching_volumes = filter(_filter, volumes)
         if len(matching_volumes) == 0:
             logger.debug("No matching volume for disk {!r} partition {!r}".format(disk, partition))
             return None
@@ -374,5 +374,3 @@ class Disk(object):
 
     def get_volume_number(self):
         self._io.ioctl_volume_query_volume_number()
-
-
