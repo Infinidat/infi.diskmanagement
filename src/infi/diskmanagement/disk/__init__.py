@@ -78,8 +78,11 @@ class Volume(object):
         def _filter(volume):
             actual = DeviceIoControl(volume.psuedo_device_object).storage_get_device_and_partition_number()
             return actual == expected
-        matching_volumes = filter(_filter, DeviceManager().volumes)
+        volumes = DeviceManager().volumes
+        logger.debug("Existing volumes: {!r}".format(volumes))
+        matching_volumes = filter(_filter, )
         if len(matching_volumes) == 0:
+            logger.debug("No matching volume for disk {!r} partition {!r}".format(disk, partition))
             return None
         return Volume(matching_volumes[0], disk, partition)
 
