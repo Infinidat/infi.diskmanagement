@@ -43,7 +43,7 @@ def to_large_integer(number):
     return instance
 
 def from_large_integer(instance):
-    return instance.QuadPart if is_64biet() else ((instance.HighPart << 32) + instance.LowPart)
+    return instance.QuadPart if is_64bit() else ((instance.HighPart << 32) + instance.LowPart)
 
 def partition_type_specific(func):
     @wraps(func)
