@@ -8,6 +8,9 @@ from infi.diskmanagement.ioctl import GUID_ZERO
 from infi.wioctl.structures import is_64bit, GUID
 from ..mount_manager import MountManager
 from infi.devicemanager import DeviceManager
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 def is_zero(large_integer):
     """:returns: if the value of LARGE_INTEGER is zero"""
@@ -198,7 +201,7 @@ class Partition(object):
         """:param size: if size_in_bytes is None, the partition will be for the entire disk
         :param offset: either a number or Capacity
         :param size_in_bytes: """
-        # I did not get this information from any official documentation, just by doing what the Disk Management 
+        # I did not get this information from any official documentation, just by doing what the Disk Management
         partition = cls._create(disk, index, index,
                                 to_large_integer(start_offset_in_bytes),
                                 to_large_integer(disk.get_size_in_bytes() - 65 * 1024 * 1024 \
@@ -235,11 +238,15 @@ class Disk(object):
 
     def wait_for_all_volumes(self):
         from time import sleep
-        try:
-            _ = [partition.get_volume().get_volume_guid() for partition in self.get_partitions()]
-        except:
-            sleep(1)
-            self.wait_for_all_volumes()
+        from waiting import wait
+        def predicate():
+            try:
+                _ = [partition.get_volume().get_volume_guid() for partition in self.get_partitions()]
+                return True
+            except:
+                logger.exception("Exception in wait_for_all_volumes")
+                return False
+        wait(predicate, timeout_seconds=30)
 
     def _update_layout(self):
         self._set_layout(self._get_layout())
