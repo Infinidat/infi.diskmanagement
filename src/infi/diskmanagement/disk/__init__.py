@@ -43,7 +43,7 @@ def to_large_integer(number):
     return instance
 
 def from_large_integer(instance):
-    return instance.QuadPart if is_64bit() else instance.HighPart << 32 + instance.LowPart
+    return instance.QuadPart if is_64bit() else ((instance.HighPart << 32) + instance.LowPart)
 
 def partition_type_specific(func):
     @wraps(func)
@@ -75,11 +75,20 @@ class Volume(object):
     def get_from_disk_and_partition(cls, disk, partition):
         from infi.devicemanager.ioctl import DeviceIoControl
         expected = disk._number, partition._struct.PartitionNumber
+        def get_devnum(volume):
+            return DeviceIoControl(volume.psuedo_device_object).storage_get_device_and_partition_number()
         def _filter(volume):
-            actual = DeviceIoControl(volume.psuedo_device_object).storage_get_device_and_partition_number()
+            actual = get_devnum(volume)
             return actual == expected
-        matching_volumes = filter(_filter, DeviceManager().volumes)
+        volumes = DeviceManager().volumes
+        logger.debug("Existing volumes: {!r}".format(volumes))
+        volumes_attributes = [dict(pdo=volume.psuedo_device_object, devnum=get_devnum(volume))
+                              for volume in volumes]
+        logger.debug("Existing volumes attributes: {!r}".format(volumes_attributes))
+        logger.debug("Was expecting {!r}".format(expected))
+        matching_volumes = filter(_filter, volumes)
         if len(matching_volumes) == 0:
+            logger.debug("No matching volume for disk {!r} partition {!r}".format(disk, partition))
             return None
         return Volume(matching_volumes[0], disk, partition)
 
@@ -371,5 +380,3 @@ class Disk(object):
 
     def get_volume_number(self):
         self._io.ioctl_volume_query_volume_number()
-
-
