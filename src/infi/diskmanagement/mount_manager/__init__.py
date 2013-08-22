@@ -51,21 +51,24 @@ class MountManager(object):
         input_buffer = ctypes.c_buffer(triplet_string + buffer_string, len(triplet_string) + len(buffer_string))
         return input_buffer
 
-    def get_volume_guid(self, volume):
+    def _iter_volume_mount_points(self, volume):
         input_buffer = self._create_input_buffer_for_query_points_ioctl(volume)
         output_buffer = self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer) + 1)
         struct = structures.MOUNTMGR_MOUNT_POINTS.create_from_string(output_buffer)
-        offset, length = struct.MountPoints[0].SymbolicLinkNameOffset, struct.MountPoints[0].SymbolicLinkNameLength
-        return _slice_unicode_string_from_buffer(output_buffer, offset, length).replace(r"\?", r"\\")
+        for item in struct.MountPoints:
+            offset, length = item.SymbolicLinkNameOffset, item.SymbolicLinkNameLength
+            yield _slice_unicode_string_from_buffer(output_buffer, offset, length)
+
+    def get_volume_guid(self, volume):
+        # there must be a volume guid
+        [volume_guid] = [item for item in self._iter_volume_mount_points(volume) if
+                         item.startswith(r"\??\Volume")]
+        return volume_guid.replace(r"\?", r"\\")
 
     def get_volume_drive_letter(self, volume):
-        input_buffer = self._create_input_buffer_for_query_points_ioctl(volume)
-        output_buffer = self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer) + 1)
-        struct = structures.MOUNTMGR_MOUNT_POINTS.create_from_string(output_buffer)
-        if len(struct.MountPoints) != 2:
-            return None
-        offset, length = struct.MountPoints[1].SymbolicLinkNameOffset, struct.MountPoints[1].SymbolicLinkNameLength
-        return _slice_unicode_string_from_buffer(output_buffer, offset, length).split('\\')[-1][0]
+        for item in self._iter_volume_mount_points(volume):
+            if "DosDevices\\" in item:
+                return item.split('\\')[-1][0]
 
     def get_volume_mount_points(self, volume_guid):
         if not volume_guid.endswith('\\'):
