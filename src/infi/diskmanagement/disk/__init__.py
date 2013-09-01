@@ -75,14 +75,18 @@ class Volume(object):
     def get_from_disk_and_partition(cls, disk, partition):
         from infi.devicemanager.ioctl import DeviceIoControl
         expected = disk._number, partition._struct.PartitionNumber
-        def get_devnum(volume):
-            return DeviceIoControl(volume.psuedo_device_object).storage_get_device_and_partition_number()
+        def get_extents(volume):
+            return DeviceIoControl(volume.psuedo_device_object).get_volume_disk_extents()
         def _filter(volume):
-            actual = get_devnum(volume)
-            return actual == expected
+            actual = get_extents(volume)
+            def compare_extent(extent):
+                return extent.DiskNumber == disk._number and \
+                       from_large_integer(extent.StartingOffset) >= partition.get_start_offset_in_bytes() and \
+                       from_large_integer(extent.ExtentLength) <= partition.get_size_in_bytes()
+            return any(compare_extent(extent) for extent in actual)
         volumes = DeviceManager().volumes
         logger.debug("Existing volumes: {!r}".format(volumes))
-        volumes_attributes = [dict(pdo=volume.psuedo_device_object, devnum=get_devnum(volume))
+        volumes_attributes = [dict(pdo=volume.psuedo_device_object, extents=get_extents(volume))
                               for volume in volumes]
         logger.debug("Existing volumes attributes: {!r}".format(volumes_attributes))
         logger.debug("Was expecting {!r}".format(expected))
