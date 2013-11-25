@@ -38,7 +38,8 @@ class MountManager(object):
                                              [field.name for field in struct._fields_.fields[2:26]])]
 
     def _create_input_buffer_for_query_points_ioctl(self, volume):
-        device_name = r"\Device\{}".format(volume._path.split('\\')[-1])
+        volume_guid = getattr(volume, "_path", volume).split('\\')[-1]
+        device_name = r"\Device\{}".format(volume_guid)
         unicode_buffer = ctypes.create_unicode_buffer(device_name)
         from os.path import sep
         buffer_string = ctypes.string_at(ctypes.addressof(unicode_buffer),
@@ -91,6 +92,27 @@ class MountManager(object):
         mount_points = self.get_volume_mount_points(volume_guid)
         assert mount_point in mount_points, "{} is not a mount point".format(mount_point)
         DeleteVolumeMountPointW(create_unicode_buffer(mount_point))
+
+    def get_volume_label(self, mount_point):
+        if not mount_point.endswith('\\'):
+            mount_point = u"{}\\".format(mount_point)
+        volume_name = create_unicode_buffer(MAX_PATH_NAMES)
+        volume_name_size = DWORD(MAX_PATH_NAMES)
+        GetVolumeInformationW(rootPathName=mount_point,
+                              volumeNameBuffer=volume_name, volumeNameSize=volume_name_size,
+                              volumeSerialNumber=None, maximumComponentLength=None, fileSystemFlags=None,
+                              fileSystemNameBuffer=None, fileSystemNameSize=DWORD(0))
+        return ctypes.wstring_at(ctypes.addressof(volume_name))
+
+    def set_volume_label(self, mount_point, label):
+        """:raises: `OverflowError if the label is too big"""
+        if not mount_point.endswith('\\'):
+            mount_point = u"{}\\".format(mount_point)
+        try:
+            SetVolumeLabelW(rootPathName=create_unicode_buffer(mount_point),
+                            volumeName=create_unicode_buffer(label))
+        except WindowsException, e:
+            raise
 
     def is_auto_mount(self):
         return self._io.ioctl_mountmgr_query_auto_mount() == MOUNTMGR_AUTO_MOUNT_STATE_ENABLED
@@ -298,4 +320,41 @@ class FindNextVolumeMountPointW(WrappedFunction):
                 (LPWSTR, IN_OUT, "volumeMountPoint"),
                 (DWORD, IN, "bufferLength"))
 
+class GetVolumeInformationW(WrappedFunction):
+    return_value = infi.wioctl.api.BOOL
 
+    @classmethod
+    def get_errcheck(cls):
+        return errcheck_invalid_handle()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((LPWSTR, IN, "rootPathName"),
+                (LPWSTR, IN_OUT, "volumeNameBuffer"),
+                (DWORD, IN, "volumeNameSize"),
+                (POINTER(DWORD), IN_OUT, "volumeSerialNumber"),
+                (POINTER(DWORD), IN_OUT, "maximumComponentLength"),
+                (POINTER(DWORD), IN_OUT, "fileSystemFlags"),
+                (LPWSTR, IN_OUT, "fileSystemNameBuffer"),
+                (DWORD, IN, "fileSystemNameSize"))
+
+
+class SetVolumeLabelW(WrappedFunction):
+    return_value = infi.wioctl.api.BOOL
+
+    @classmethod
+    def get_errcheck(cls):
+        return infi.wioctl.api.errcheck_bool()
+
+    @classmethod
+    def get_library_name(cls):
+        return 'kernel32'
+
+    @classmethod
+    def get_parameters(cls):
+        return ((HANDLE, IN, "rootPathName"),
+                (LPWSTR, IN, "volumeName"),)
