@@ -171,3 +171,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         buffer = ctypes.c_buffer(klass.write_to_string(klass(NewState=state)))
         self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_SET_AUTO_MOUNT, buffer, size, 0, 0)
 
+    def grow_partition(self, grow_struct):
+        size = layout.sizeof(grow_struct)
+        input_buffer = ctypes.c_buffer(grow_struct.write_to_string(grow_struct))
+        self.ioctl(infi.wioctl.constants.IOCTL_DISK_GROW_PARTITION, input_buffer, size, 0, 0)

@@ -128,3 +128,6 @@ class MOUNTMGR_QUERY_AUTO_MOUNT(Struct):
 class MOUNTMGR_SET_AUTO_MOUNT(Struct):
     _fields_ = [MOUNTMGR_AUTO_MOUNT_STATE("NewState"), ]
 
+class DISK_GROW_PARTITION(Struct):
+    _fields = [ULONG("PartitionNumber"), Field("BytesToGrow", LARGE_INTEGER)]
+
