@@ -232,9 +232,9 @@ class Partition(object):
     def resize(self, size_in_bytes):
         _struct = structures.DISK_GROW_PARTITION()
         _struct.PartitionNumber = self._struct.PartitionNumber
-        _struct.BytesToGrow = to_large_integer(size_in_bytes - self.get_size_in_bytes)
+        _struct.BytesToGrow = to_large_integer(size_in_bytes - self.get_size_in_bytes())
         self._disk._io.ioctl_disk_grow_partition(_struct)
-
+        self._struct.PartitionLength = to_large_integer(size_in_bytes)  # we get_size_in_bytes will return the new size
 
 class Disk(object):
     def __init__(self, disk_number):

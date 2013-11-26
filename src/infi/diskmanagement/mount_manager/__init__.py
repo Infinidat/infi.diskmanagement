@@ -164,7 +164,7 @@ class PartitionManager(object):
         return self._io.ioctl_disk_set_san_settings(settings)
 
 import infi.wioctl
-from infi.crap import WrappedFunction, IN, IN_OUT, OUT
+from infi.cwrap import WrappedFunction, IN, IN_OUT, OUT
 from ctypes import c_wchar_p as LPCWSTR
 from ctypes import c_wchar_p as LPWSTR
 from ctypes import c_ulong as DWORD
