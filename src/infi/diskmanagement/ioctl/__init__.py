@@ -45,8 +45,8 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
     def _partial_ioctl_diks_get_drive_layout_ex(self, size=24):
         """:returns: a `ctypes.c_buffer` object"""
         # http://msdn.microsoft.com/en-us/library/windows/hardware/ff560364(v=VS.85).aspx
-        # To determine the size of output buffer that is required, 
-        # caller should send this IOCTL request in a loop. 
+        # To determine the size of output buffer that is required,
+        # caller should send this IOCTL request in a loop.
         # Every time the storage stack rejects the IOCTL with an error message indicating that the buffer was too small,
         # caller should double the buffer size.
         buffer = ctypes.c_buffer('\x00' * size, size)
@@ -171,3 +171,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         buffer = ctypes.c_buffer(klass.write_to_string(klass(NewState=state)))
         self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_SET_AUTO_MOUNT, buffer, size, 0, 0)
 
+    def ioctl_disk_grow_partition(self, grow_struct):
+        size = grow_struct.sizeof(grow_struct)
+        input_buffer = ctypes.c_buffer(structures.DISK_GROW_PARTITION.write_to_string(grow_struct))
+        self.ioctl(infi.wioctl.constants.IOCTL_DISK_GROW_PARTITION, input_buffer, size, 0, 0)
