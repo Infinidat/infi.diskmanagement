@@ -185,3 +185,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
             if e.winerror == infi.wioctl.constants.ERROR_INSUFFICIENT_BUFFER:
                 return
             raise
+
+    def ioctl_disk_update_properties(self):
+        self.ioctl(infi.wioctl.constants.IOCTL_DISK_UPDATE_PROPERTIES, 0, 0, 0, 0)
+

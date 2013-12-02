@@ -230,6 +230,7 @@ class Partition(object):
         return Volume.get_from_disk_and_partition(self._disk, self)
 
     def resize(self, size_in_bytes):
+        self._disk._io.ioctl_disk_update_properties()
         self._disk._io.ioctl_disk_update_drive_size()
 
         _struct = structures.DISK_GROW_PARTITION()
