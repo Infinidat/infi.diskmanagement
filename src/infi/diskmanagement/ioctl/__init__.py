@@ -175,3 +175,17 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         size = grow_struct.sizeof(grow_struct)
         input_buffer = ctypes.c_buffer(structures.DISK_GROW_PARTITION.write_to_string(grow_struct))
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_GROW_PARTITION, input_buffer, size, 0, 0)
+
+    def ioctl_disk_update_drive_size(self):
+        size = 1
+        buffer = ctypes.c_buffer('\x00' * size, size)
+        try:
+            self.ioctl(infi.wioctl.constants.IOCTL_DISK_UPDATE_DRIVE_SIZE, 0, 0, buffer, size)
+        except infi.wioctl.api.WindowsException, e:
+            if e.winerror == infi.wioctl.constants.ERROR_INSUFFICIENT_BUFFER:
+                return
+            raise
+
+    def ioctl_disk_update_properties(self):
+        self.ioctl(infi.wioctl.constants.IOCTL_DISK_UPDATE_PROPERTIES, 0, 0, 0, 0)
+

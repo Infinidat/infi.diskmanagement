@@ -27,6 +27,7 @@ PARTITION_MSFT_RESERVED_STARTING_OFFSET = 17408
 PARTITION_MSFT_RESERVED_SIZE_MIN = 32 * 1024 * 1024
 PARTITION_MSFT_RESERVED_SIZE_MAX = 128 * 1024 * 1024
 PARTITION_MSFT_RESERVED_BAR = 16 * 1024 * 1024 * 1024
+ERROR_INVALID_PARAMETER = 87
 
 # Windows returns empty partition entries from the partition table.
 # This lambda-function that returns True if the partition is not empty, i.e. in use
@@ -230,11 +231,22 @@ class Partition(object):
         return Volume.get_from_disk_and_partition(self._disk, self)
 
     def resize(self, size_in_bytes):
+        import infi.wioctl
+        self._disk._io.ioctl_disk_update_properties()
+        self._disk._io.ioctl_disk_update_drive_size()
+
         _struct = structures.DISK_GROW_PARTITION()
         _struct.PartitionNumber = self._struct.PartitionNumber
         _struct.BytesToGrow = to_large_integer(size_in_bytes - self.get_size_in_bytes())
-        self._disk._io.ioctl_disk_grow_partition(_struct)
+        try:
+            self._disk._io.ioctl_disk_grow_partition(_struct)
+        except infi.wioctl.api.WindowsException, e:
+            if e.winerror != ERROR_INVALID_PARAMETER:
+                raise
+            _struct.BytesToGrow = to_large_integer(size_in_bytes - self.get_size_in_bytes() - 32000)
+            self._disk._io.ioctl_disk_grow_partition(_struct)
         self._struct.PartitionLength = to_large_integer(size_in_bytes)  # we get_size_in_bytes will return the new size
+
 
 class Disk(object):
     def __init__(self, disk_number):
