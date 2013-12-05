@@ -28,6 +28,8 @@ PARTITION_MSFT_RESERVED_SIZE_MIN = 32 * 1024 * 1024
 PARTITION_MSFT_RESERVED_SIZE_MAX = 128 * 1024 * 1024
 PARTITION_MSFT_RESERVED_BAR = 16 * 1024 * 1024 * 1024
 ERROR_INVALID_PARAMETER = 87
+FIRST_PRIMARY_PARTITION_OFFSET = 1024 * 1024
+GPT_PARTITION_OFFSET = 1024 * 1024
 
 # Windows returns empty partition entries from the partition table.
 # This lambda-function that returns True if the partition is not empty, i.e. in use
@@ -195,7 +197,7 @@ class Partition(object):
         return partition
 
     @classmethod
-    def create_primary(cls, disk, index=0, boot=False, start_offset_in_bytes=1024 * 1024, size_in_bytes=None):
+    def create_primary(cls, disk, index=0, boot=False, start_offset_in_bytes=FIRST_PRIMARY_PARTITION_OFFSET, size_in_bytes=None):
         """:param size: if size_in_bytes is None, the partition will be for the entire disk
         :param offset: either a number or Capacity
         :param size_in_bytes: """
@@ -346,29 +348,48 @@ class Disk(object):
         self._io.ioctl_disk_delete_drive_layout()
         self.clear_cached_properties()
 
-    def _create_partition_table_mbr(self):
+    def _create_partition_table_mbr(self, alignment_in_bytes=None):
         signature = generate_signature()
         self._io.ioctl_disk_create_disk(partition_style=PARTITION_STYLE_MBR)
 
-    def _create_partition_table_gpt(self):
+    def _create_partition_table_gpt(self, alignment_in_bytes=None):
         guid = generate_guid()
         self._io.ioctl_disk_create_disk(partition_style=PARTITION_STYLE_GPT)
-        size_in_bytes = PARTITION_MSFT_RESERVED_SIZE_MIN if self.get_size_in_bytes() < PARTITION_MSFT_RESERVED_BAR \
-                        else PARTITION_MSFT_RESERVED_SIZE_MAX
+        minimum_required_size_in_bytes = PARTITION_MSFT_RESERVED_SIZE_MIN \
+                                         if self.get_size_in_bytes() < PARTITION_MSFT_RESERVED_BAR \
+                                         else PARTITION_MSFT_RESERVED_SIZE_MAX
+        size_in_bytes = minimum_required_size_in_bytes
+        if alignment_in_bytes:
+            size_alignment = size_in_bytes % alignment_in_bytes
+            offset_alignment = PARTITION_MSFT_RESERVED_STARTING_OFFSET % alignment_in_bytes
+            if size_in_bytes % alignment_in_bytes:
+                size_in_bytes += (alignment_in_bytes - size_in_bytes % alignment_in_bytes)
+            if offset_alignment:
+                size_in_bytes += (alignment_in_bytes - offset_alignment)
         Partition.create_guid(self, 1, PARTITION_MSFT_RESERVED_GUID,
                               PARTITION_MSFT_RESERVED_STARTING_OFFSET, size_in_bytes)
 
-    def create_partition_table(self, type_name):
+    def create_partition_table(self, type_name, alignment_in_bytes=None):
         """:param type_name: either 'gpt' or 'mbr'"""
-        getattr(self, "_create_partition_table_{}".format(type_name))()
+        getattr(self, "_create_partition_table_{}".format(type_name))(alignment_in_bytes)
         self.clear_cached_properties()
 
-    def create_first_partition(self):
+    def create_first_partition(self, alignment_in_bytes=None):
         if self.is_mbr():
-            Partition.create_primary(self)
+            offset_in_bytes = FIRST_PRIMARY_PARTITION_OFFSET
+            if alignment_in_bytes:
+                offset_alignment = FIRST_PRIMARY_PARTITION_OFFSET % alignment_in_bytes
+                if offset_alignment:
+                    offset_in_bytes += FIRST_PRIMARY_PARTITION_OFFSET - offset_alignment
+            Partition.create_primary(self, start_offset_in_bytes=offset_in_bytes)
         elif self.is_gpt():
-            reserved_partition_size = from_large_integer(self._get_layout().PartitionEntry[0].PartitionLength)
-            offset_in_bytes = reserved_partition_size + (1024 * 1024)
+            reserved_partition = self._get_layout().PartitionEntry[0]
+            offset_in_bytes = from_large_integer(reserved_partition.StartingOffset) + from_large_integer(reserved_partition.PartitionLength)
+            if alignment_in_bytes:
+                offset_in_bytes += GPT_PARTITION_OFFSET
+                offset_alignment = GPT_PARTITION_OFFSET % alignment_in_bytes
+                if offset_alignment:
+                    offset_in_bytes += GPT_PARTITION_OFFSET - alignment_in_bytes
             size_in_bytes = self.get_size_in_bytes() - offset_in_bytes
             Partition.create_guid(self, 2, PARTITION_BASIC_DATA_GUID, offset_in_bytes, size_in_bytes)
 
