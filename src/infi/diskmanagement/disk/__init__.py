@@ -35,6 +35,14 @@ GPT_PARTITION_OFFSET = 1024 * 1024
 # This lambda-function that returns True if the partition is not empty, i.e. in use
 partitions_in_use_lambda = lambda partition: not is_zero(partition.PartitionLength)
 
+
+def is_guid_partition(partition):
+    return partition.Data1 == PARTITION_MSFT_RESERVED_GUID.Data1 and \
+           partition.Data2 == PARTITION_MSFT_RESERVED_GUID.Data2 and \
+           partition.Data3 == PARTITION_MSFT_RESERVED_GUID.Data3 and \
+           partition.Data4 == PARTITION_MSFT_RESERVED_GUID.Data4
+
+
 def to_large_integer(number):
     kwargs = {}
     if is_64bit():
@@ -333,7 +341,17 @@ class Disk(object):
         pass
 
     def _iter_partitions_gpt(self):
-        for struct in self._get_layout().PartitionEntry[1:]:
+        # When creating a GPT drive in Windows, the first partition is a hidden partition
+        # When creating a VSS snapshot, Windows moves the reseved partition and creates another one before it
+        # This method needs to return the non-hidden partitions
+        # The only logic I see that fits is to yield those after the reserved parititon:
+        # the reserved partition has a known GUID, I can't find a known guid for the VSS partition
+        sorted_by_offset = sorted(self._get_layout().PartitionEntry, key=lambda item: item.StartingOffset)
+        reserved_partition = [item for item in sorted_by_offset if is_guid_partition(item)]
+        starting_index = 0
+        if reserved_partition:
+            starting_index = sorted_by_offset.index(reserved_partition[0])
+        for struct in sorted_by_offset[starting_index+1:]:
             partition = Partition(self, struct)
             yield partition
 
