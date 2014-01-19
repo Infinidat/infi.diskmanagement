@@ -37,10 +37,10 @@ partitions_in_use_lambda = lambda partition: not is_zero(partition.PartitionLeng
 
 
 def is_guid_partition(partition):
-    return partition.Data1 == PARTITION_MSFT_RESERVED_GUID.Data1 and \
-           partition.Data2 == PARTITION_MSFT_RESERVED_GUID.Data2 and \
-           partition.Data3 == PARTITION_MSFT_RESERVED_GUID.Data3 and \
-           partition.Data4 == PARTITION_MSFT_RESERVED_GUID.Data4
+    return partition.union.PartitionType.Data1 == PARTITION_MSFT_RESERVED_GUID.Data1 and \
+           partition.union.PartitionType.Data2 == PARTITION_MSFT_RESERVED_GUID.Data2 and \
+           partition.union.PartitionType.Data3 == PARTITION_MSFT_RESERVED_GUID.Data3 and \
+           partition.union.PartitionType.Data4 == PARTITION_MSFT_RESERVED_GUID.Data4
 
 
 def to_large_integer(number):
