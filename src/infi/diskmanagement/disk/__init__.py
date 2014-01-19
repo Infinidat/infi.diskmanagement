@@ -385,12 +385,12 @@ class Disk(object):
         elif self.is_gpt():
             reserved_partition = self._get_layout().PartitionEntry[0]
             offset_in_bytes = from_large_integer(reserved_partition.StartingOffset) + from_large_integer(reserved_partition.PartitionLength)
+            offset_in_bytes += GPT_PARTITION_OFFSET
             if alignment_in_bytes:
-                offset_in_bytes += GPT_PARTITION_OFFSET
                 offset_alignment = GPT_PARTITION_OFFSET % alignment_in_bytes
                 if offset_alignment:
-                    offset_in_bytes += GPT_PARTITION_OFFSET - alignment_in_bytes
-            size_in_bytes = self.get_size_in_bytes() - offset_in_bytes
+                    offset_in_bytes += GPT_PARTITION_OFFSET - offset_alignment
+            size_in_bytes = self.get_size_in_bytes() - offset_in_bytes - GPT_PARTITION_OFFSET
             Partition.create_guid(self, 2, PARTITION_BASIC_DATA_GUID, offset_in_bytes, size_in_bytes)
 
     def is_offline(self):
