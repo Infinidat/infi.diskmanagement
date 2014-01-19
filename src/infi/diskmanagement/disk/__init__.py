@@ -346,7 +346,8 @@ class Disk(object):
         # This method needs to return the non-hidden partitions
         # The only logic I see that fits is to yield those after the reserved parititon:
         # the reserved partition has a known GUID, I can't find a known guid for the VSS partition
-        sorted_by_offset = sorted(self._get_layout().PartitionEntry, key=lambda item: item.StartingOffset)
+        key_lambda = lambda item: from_large_integer(item.StartingOffset)
+        sorted_by_offset = sorted(self._get_layout().PartitionEntry, key=key_lambda)
         reserved_partition = [item for item in sorted_by_offset if is_guid_partition(item)]
         starting_index = 0
         if reserved_partition:
