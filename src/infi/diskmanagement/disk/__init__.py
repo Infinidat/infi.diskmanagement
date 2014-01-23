@@ -35,6 +35,14 @@ GPT_PARTITION_OFFSET = 1024 * 1024
 # This lambda-function that returns True if the partition is not empty, i.e. in use
 partitions_in_use_lambda = lambda partition: not is_zero(partition.PartitionLength)
 
+
+def is_guid_partition(partition):
+    return partition.union.PartitionType.Data1 == PARTITION_MSFT_RESERVED_GUID.Data1 and \
+           partition.union.PartitionType.Data2 == PARTITION_MSFT_RESERVED_GUID.Data2 and \
+           partition.union.PartitionType.Data3 == PARTITION_MSFT_RESERVED_GUID.Data3 and \
+           partition.union.PartitionType.Data4 == PARTITION_MSFT_RESERVED_GUID.Data4
+
+
 def to_large_integer(number):
     kwargs = {}
     if is_64bit():
@@ -333,7 +341,18 @@ class Disk(object):
         pass
 
     def _iter_partitions_gpt(self):
-        for struct in self._get_layout().PartitionEntry[1:]:
+        # When creating a GPT drive in Windows, the first partition is a hidden partition
+        # When creating a VSS snapshot, Windows moves the reseved partition and creates another one before it
+        # This method needs to return the non-hidden partitions
+        # The only logic I see that fits is to yield those after the reserved parititon:
+        # the reserved partition has a known GUID, I can't find a known guid for the VSS partition
+        key_lambda = lambda item: from_large_integer(item.StartingOffset)
+        sorted_by_offset = sorted(self._get_layout().PartitionEntry, key=key_lambda)
+        reserved_partition = [item for item in sorted_by_offset if is_guid_partition(item)]
+        starting_index = 0
+        if reserved_partition:
+            starting_index = sorted_by_offset.index(reserved_partition[0])
+        for struct in sorted_by_offset[starting_index+1:]:
             partition = Partition(self, struct)
             yield partition
 
@@ -385,12 +404,12 @@ class Disk(object):
         elif self.is_gpt():
             reserved_partition = self._get_layout().PartitionEntry[0]
             offset_in_bytes = from_large_integer(reserved_partition.StartingOffset) + from_large_integer(reserved_partition.PartitionLength)
+            offset_in_bytes += GPT_PARTITION_OFFSET
             if alignment_in_bytes:
-                offset_in_bytes += GPT_PARTITION_OFFSET
                 offset_alignment = GPT_PARTITION_OFFSET % alignment_in_bytes
                 if offset_alignment:
-                    offset_in_bytes += GPT_PARTITION_OFFSET - alignment_in_bytes
-            size_in_bytes = self.get_size_in_bytes() - offset_in_bytes
+                    offset_in_bytes += GPT_PARTITION_OFFSET - offset_alignment
+            size_in_bytes = self.get_size_in_bytes() - offset_in_bytes - GPT_PARTITION_OFFSET
             Partition.create_guid(self, 2, PARTITION_BASIC_DATA_GUID, offset_in_bytes, size_in_bytes)
 
     def is_offline(self):
