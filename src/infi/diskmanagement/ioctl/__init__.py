@@ -165,7 +165,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         return buffer
 
     def ioctl_mountmgr_query_points(self, input_buffer, input_buffer_size):
-        return self._partial_ioctl_mountmgr_query_points(, input_buffer_size)
+        return self._partial_ioctl_mountmgr_query_points(input_buffer, input_buffer_size)
 
     def ioctl_mountmgr_query_auto_mount(self):
         klass = structures.MOUNTMGR_QUERY_AUTO_MOUNT
