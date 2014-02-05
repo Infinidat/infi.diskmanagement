@@ -32,7 +32,7 @@ class CoCreateGuid(infi.wioctl.api.WrappedFunction):
 def generate_guid():
     size = _sizeof(infi.wioctl.structures.GUID)
     buffer = ctypes.c_buffer('\x00' * size)
-    ctypes.windll.LoadLibrary("ole32.dll").CoCreateGuid(buffer)
+    CoCreateGuid(buffer)
     return infi.wioctl.structures.GUID.create_from_string(buffer)
 
 def generate_signature():
