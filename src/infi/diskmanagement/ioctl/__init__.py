@@ -151,12 +151,19 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         self.ioctl(infi.wioctl.constants.IOCTL_VOLUME_QUERY_VOLUME_NUMBER, 0, 0, buffer, size)
         return klass.create_from_string(buffer)
 
+    def _partial_ioctl_mountmgr_query_points(self, size=256):
+        """:returns: a `ctypes.c_buffer` object"""
+        buffer = ctypes.c_buffer('\x00' * size, size)
+        try:
+            self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_POINTS, input_buffer, input_buffer_size, buffer, size)
+        except infi.wioctl.api.WindowsException, e:
+            if e.winerror != infi.wioctl.constants.ERROR_MORE_DATA:
+                raise
+            return self._partial_ioctl_mountmgr_query_points(size * 2)
+        return buffer
+
     def ioctl_mountmgr_query_points(self, input_buffer, input_buffer_size):
-        output_buffer_size = 256
-        output_buffer = ctypes.c_buffer('\x00' * 256, 256)
-        self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_POINTS,
-                   input_buffer, input_buffer_size, output_buffer, output_buffer_size)
-        return output_buffer
+        return self._partial_ioctl_mountmgr_query_points()
 
     def ioctl_mountmgr_query_auto_mount(self):
         klass = structures.MOUNTMGR_QUERY_AUTO_MOUNT
