@@ -1,6 +1,7 @@
 
 import ctypes
 import infi.wioctl
+import infi.cwrap
 from . import constants
 from . import structures
 
@@ -13,12 +14,13 @@ def _extract_whole_structure_from_drive_layout_buffer(string):
     instance = structures.DRIVE_LAYOUT_INFORMATION_EX.create_from_string(string)
     return instance
 
+
 class CoCreateGuid(infi.wioctl.api.WrappedFunction):
     return_value = infi.wioctl.api.BOOL
 
     @classmethod
     def get_errcheck(cls):
-        return infi.wioctl.api.errcheck_bool()
+        return infi.cwrap.errcheck_nonzero()
 
     @classmethod
     def get_library_name(cls):
