@@ -1,6 +1,7 @@
 
 import ctypes
 import infi.wioctl
+import infi.cwrap
 from . import constants
 from . import structures
 
@@ -13,12 +14,13 @@ def _extract_whole_structure_from_drive_layout_buffer(string):
     instance = structures.DRIVE_LAYOUT_INFORMATION_EX.create_from_string(string)
     return instance
 
+
 class CoCreateGuid(infi.wioctl.api.WrappedFunction):
     return_value = infi.wioctl.api.BOOL
 
     @classmethod
     def get_errcheck(cls):
-        return infi.wioctl.api.errcheck_bool()
+        return infi.cwrap.errcheck_nonzero()
 
     @classmethod
     def get_library_name(cls):
@@ -32,7 +34,7 @@ class CoCreateGuid(infi.wioctl.api.WrappedFunction):
 def generate_guid():
     size = _sizeof(infi.wioctl.structures.GUID)
     buffer = ctypes.c_buffer('\x00' * size)
-    ctypes.windll.LoadLibrary("ole32.dll").CoCreateGuid(buffer)
+    CoCreateGuid(buffer)
     return infi.wioctl.structures.GUID.create_from_string(buffer)
 
 def generate_signature():
@@ -151,12 +153,19 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         self.ioctl(infi.wioctl.constants.IOCTL_VOLUME_QUERY_VOLUME_NUMBER, 0, 0, buffer, size)
         return klass.create_from_string(buffer)
 
+    def _partial_ioctl_mountmgr_query_points(self, input_buffer, input_buffer_size, size=256):
+        """:returns: a `ctypes.c_buffer` object"""
+        buffer = ctypes.c_buffer('\x00' * size, size)
+        try:
+            self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_POINTS, input_buffer, input_buffer_size, buffer, size)
+        except infi.wioctl.api.WindowsException, e:
+            if e.winerror != infi.wioctl.constants.ERROR_MORE_DATA:
+                raise
+            return self._partial_ioctl_mountmgr_query_points(input_buffer, input_buffer_size, size * 2)
+        return buffer
+
     def ioctl_mountmgr_query_points(self, input_buffer, input_buffer_size):
-        output_buffer_size = 256
-        output_buffer = ctypes.c_buffer('\x00' * 256, 256)
-        self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_POINTS,
-                   input_buffer, input_buffer_size, output_buffer, output_buffer_size)
-        return output_buffer
+        return self._partial_ioctl_mountmgr_query_points(input_buffer, input_buffer_size)
 
     def ioctl_mountmgr_query_auto_mount(self):
         klass = structures.MOUNTMGR_QUERY_AUTO_MOUNT
