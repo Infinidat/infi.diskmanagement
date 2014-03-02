@@ -23,11 +23,7 @@ volume.assign_first_available_drive_letter() if not volume.has_drive_letter() el
 Checking out the code
 =====================
 
-This project uses buildout and infi-projector, and git to generate setup.py and __version__.py.
-In order to generate these, first get infi-projector:
+Run the following:
 
-    easy_install infi.projector
-
-    and then run in the project directory:
-
-        projector devenv build
+    easy_install -U infi.projector
+    projector devenv build
