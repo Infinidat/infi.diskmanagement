@@ -185,8 +185,14 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         input_buffer = ctypes.c_buffer(structures.DISK_GROW_PARTITION.write_to_string(grow_struct))
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_GROW_PARTITION, input_buffer, size, 0, 0)
 
+    def ioctl_extend_volume(self, new_size):
+        size_in_sectors = ctypes.c_longlong(new_size / 512)
+        self.ioctl(infi.wioctl.constants.FSCTL_EXTEND_VOLUME,
+                   ctypes.byref(size_in_sectors),
+                   ctypes.sizeof(size_in_sectors), 0, 0)
+
     def ioctl_disk_update_drive_size(self):
-        size = 1
+        size = _sizeof(structures.DISK_GEOMETRY)
         buffer = ctypes.c_buffer('\x00' * size, size)
         try:
             self.ioctl(infi.wioctl.constants.IOCTL_DISK_UPDATE_DRIVE_SIZE, 0, 0, buffer, size)

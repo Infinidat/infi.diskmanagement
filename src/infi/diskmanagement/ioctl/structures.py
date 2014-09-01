@@ -131,3 +131,8 @@ class MOUNTMGR_SET_AUTO_MOUNT(Struct):
 class DISK_GROW_PARTITION(Struct):
     _fields_ = [ULONG("PartitionNumber"), Padding(4), Field("BytesToGrow", LARGE_INTEGER)]
 
+MEDIA_TYPE = ULONG
+
+class DISK_GEOMETRY(Struct):
+    _fields_ = [Field("Cylinders", LARGE_INTEGER), MEDIA_TYPE("MediaType"),
+                ULInt32("TracksPerCylinder"), ULInt32("SectorsPerTrack"), ULInt32("BytesPerSector")]

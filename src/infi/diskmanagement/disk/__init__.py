@@ -156,6 +156,10 @@ class Volume(object):
     def offline(self):
         return DeviceIoControl(self._path, True, False).ioctl_volume_offline()
 
+    def resize(self, size_in_bytes):
+        return DeviceIoControl(self._path, True, False).ioctl_extend_volume(size_in_bytes)
+
+
 class Partition(object):
     def __init__(self, disk, struct):
         super(Partition, self).__init__()
