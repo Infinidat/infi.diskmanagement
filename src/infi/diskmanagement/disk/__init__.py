@@ -85,9 +85,17 @@ class Volume(object):
     @classmethod
     def get_from_disk_and_partition(cls, disk, partition):
         from infi.devicemanager.ioctl import DeviceIoControl
+        from infi.wioctl.api import WindowsException
         expected = disk._number, partition._struct.PartitionNumber
+
         def get_extents(volume):
-            return DeviceIoControl(volume.psuedo_device_object).get_volume_disk_extents()
+            try:
+                return DeviceIoControl(volume.psuedo_device_object).get_volume_disk_extents()
+            except WindowsException, error:
+                if error.winerror == 2:
+                    return []
+                raise
+
         def _filter(volume):
             actual = get_extents(volume)
             def compare_extent(extent):
