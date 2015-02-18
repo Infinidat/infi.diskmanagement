@@ -133,8 +133,6 @@ class MountManager(object):
         search_handle = None
         try:
             search_handle = FindFirstVolumeW(buffer, length)
-            if buffer.value:
-                yield buffer.value
             while True:
                 if buffer.value:
                     yield buffer.value
