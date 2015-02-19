@@ -66,58 +66,31 @@ def partition_type_specific(func):
     return callee
 
 class Volume(object):
-    def __init__(self, setupapi_object, disk, partition):
+    def __init__(self, disk, partition, mount_manager=None):
         super(Volume, self).__init__()
-        self._setupapi_object = setupapi_object
         self._disk = disk
         self._partition = partition
+        self._mount_manager = mount_manager or MountManager()
         self._io = DeviceIoControl(self._path, False)
-        self._mount_manager = MountManager()
 
     @property
     @cached_method
     def _path(self):
-        return self._setupapi_object.psuedo_device_object
+        return self.get_volume_guid()
 
     def __repr__(self):
-        return "Volume <{}>".format(self._path)
+        try:
+            return "Volume <{}>".format(self._path)
+        except:
+            return "<Volume <?>"
 
     @classmethod
-    def get_from_disk_and_partition(cls, disk, partition):
-        from infi.devicemanager.ioctl import DeviceIoControl
-        from infi.wioctl.api import WindowsException
-        expected = disk._number, partition._struct.PartitionNumber
-
-        def get_extents(volume):
-            try:
-                return DeviceIoControl(volume.psuedo_device_object).get_volume_disk_extents()
-            except WindowsException, error:
-                if error.winerror == 2:
-                    return []
-                raise
-
-        def _filter(volume):
-            actual = get_extents(volume)
-            def compare_extent(extent):
-                return extent.DiskNumber == disk._number and \
-                       from_large_integer(extent.StartingOffset) >= partition.get_start_offset_in_bytes() and \
-                       from_large_integer(extent.ExtentLength) <= partition.get_size_in_bytes()
-            return any(compare_extent(extent) for extent in actual)
-        volumes = DeviceManager().volumes
-        logger.debug("Existing volumes: {!r}".format(volumes))
-        volumes_attributes = [dict(pdo=volume.psuedo_device_object, extents=get_extents(volume))
-                              for volume in volumes]
-        logger.debug("Existing volumes attributes: {!r}".format(volumes_attributes))
-        logger.debug("Was expecting {!r}".format(expected))
-        matching_volumes = filter(_filter, volumes)
-        if len(matching_volumes) == 0:
-            logger.debug("No matching volume for disk {!r} partition {!r}".format(disk, partition))
-            return None
-        return Volume(matching_volumes[0], disk, partition)
+    def get_from_disk_and_partition(cls, disk, partition, mount_manager=None):
+        return Volume(disk, partition, mount_manager=mount_manager)
 
     def _get_device_number(self):
         from infi.devicemanager.ioctl import DeviceIoControl
-        return DeviceIoControl(self._setupapi_object.psuedo_device_object).storage_get_device_and_partition_number()
+        return DeviceIoControl(self._path.psuedo_device_object).storage_get_device_and_partition_number()
 
     @cached_method
     def _get_wmi_object(self):
@@ -138,7 +111,18 @@ class Volume(object):
         wmi_object.Format(QuickFormat=quick, FileSystem=file_system)
 
     def get_volume_guid(self):
-        return self._mount_manager.get_volume_guid(self)
+        _struct = self._partition._struct
+        partition_info = from_large_integer(_struct.StartingOffset), from_large_integer(_struct.PartitionLength)
+
+        for volume_guid in self._mount_manager.get_volume_guids():
+            volume_guid = volume_guid.rstrip("\\")
+            for extent in self._mount_manager.get_volume_extents(volume_guid):
+                extent_info = from_large_integer(extent.StartingUsableOffset), from_large_integer(extent.ExtentLength)
+                if extent.DiskNumber != self._disk._number:
+                    continue
+                # extent needs to be contained inside the partition
+                if extent_info[0] >= partition_info[0] and sum(extent_info) <= sum(partition_info):
+                    return volume_guid
 
     def get_moint_points(self):
         return self._mount_manager.get_volume_mount_points(self)
