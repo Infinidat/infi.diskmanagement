@@ -90,7 +90,7 @@ class Volume(object):
 
     def _get_device_number(self):
         from infi.devicemanager.ioctl import DeviceIoControl
-        return DeviceIoControl(self._path.psuedo_device_object).storage_get_device_and_partition_number()
+        return DeviceIoControl(self._path).storage_get_device_and_partition_number()
 
     @cached_method
     def _get_wmi_object(self):
