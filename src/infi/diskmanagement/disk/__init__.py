@@ -111,12 +111,20 @@ class Volume(object):
         wmi_object.Format(QuickFormat=quick, FileSystem=file_system)
 
     def get_volume_guid(self):
+        from infi.wioctl.errors import WindowsException
+
         _struct = self._partition._struct
         partition_info = from_large_integer(_struct.StartingOffset), from_large_integer(_struct.PartitionLength)
 
         for volume_guid in self._mount_manager.get_volume_guids():
             volume_guid = volume_guid.rstrip("\\")
-            for extent in self._mount_manager.get_volume_extents(volume_guid):
+            try:
+                extents = self._mount_manager.get_volume_extents(volume_guid)
+            except WindowsException,e:
+                if e.winerror == 1: # Floppy/CD/..
+                    continue
+                raise
+            for extent in extents:
                 extent_info = from_large_integer(extent.StartingUsableOffset), from_large_integer(extent.ExtentLength)
                 if extent.DiskNumber != self._disk._number:
                     continue
