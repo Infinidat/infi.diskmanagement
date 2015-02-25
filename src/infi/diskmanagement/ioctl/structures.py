@@ -1,6 +1,6 @@
 
 from infi.wioctl.structures import ULInt32, ULInt64, Struct, UCHAR, BOOLEAN, ULONG, Field, FixedSizeArray
-from infi.wioctl.structures import ULONG64, GUID, WCHAR, LARGE_INTEGER, ULInt16
+from infi.wioctl.structures import ULONG64, GUID, WCHAR, LARGE_INTEGER, ULInt16, DWORD
 
 from infi.instruct import  SelectStructByFunc, VarSizeArray, ReadPointer, Padding
 
@@ -109,6 +109,14 @@ class DISK_SAN_SETTINGS(Struct):
 
 class VOLUME_NUMBER(Struct):
     _fields_ = [ULONG("VolumeNumber"), FixedSizeArray("VolumeManagerName", 8, WCHAR), ]
+
+class DISK_EXTENT(Struct):
+    _fields_ = [DWORD("DiskNumber"), Padding(4),
+                Field("StartingUsableOffset", LARGE_INTEGER), Field("ExtentLength", LARGE_INTEGER),]
+
+class VOLUME_DISK_EXTENTS(Struct):
+    _fields_ = [DWORD("NumberOfDiskExtents"), Padding(4),
+                VarSizeArray("Extents", ReadPointer("NumberOfDiskExtents"), DISK_EXTENT),]
 
 USHORT = ULInt16
 

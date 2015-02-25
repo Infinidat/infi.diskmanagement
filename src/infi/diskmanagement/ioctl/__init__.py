@@ -153,6 +153,21 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         self.ioctl(infi.wioctl.constants.IOCTL_VOLUME_QUERY_VOLUME_NUMBER, 0, 0, buffer, size)
         return klass.create_from_string(buffer)
 
+    def _partial_ioctl_volume_get_volume_disk_extents(self, size):
+        klass = structures.VOLUME_DISK_EXTENTS
+        buffer = ctypes.c_buffer('\x00' * size, size)
+        try:
+            self.ioctl(infi.wioctl.constants.IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, 0, 0, buffer, size)
+        except infi.wioctl.api.WindowsException, e:
+            if e.winerror != infi.wioctl.constants.ERROR_MORE_DATA:
+                raise
+            return self._partial_ioctl_volume_get_volume_disk_extents(size + _sizeof(structures.DISK_EXTENT))
+        return klass.create_from_string(buffer)
+
+    def ioctl_volume_get_volume_disk_extents(self):
+        size = _sizeof(structures.DISK_EXTENT) + ctypes.sizeof(ctypes.c_ulong) + 4
+        return self._partial_ioctl_volume_get_volume_disk_extents(size)
+
     def _partial_ioctl_mountmgr_query_points(self, input_buffer, input_buffer_size, size=256):
         """:returns: a `ctypes.c_buffer` object"""
         buffer = ctypes.c_buffer('\x00' * size, size)

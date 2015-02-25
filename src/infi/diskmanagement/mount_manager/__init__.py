@@ -2,6 +2,7 @@
 from ..ioctl import DeviceIoControl, generate_signature, generate_guid, structures, constants
 from ..ioctl.constants import PARTITION_STYLE_MBR, PARTITION_STYLE_GPT, PARTITION_STYLE_RAW
 from ..ioctl.constants import MOUNTMGR_AUTO_MOUNT_STATE_DISABLED, MOUNTMGR_AUTO_MOUNT_STATE_ENABLED
+from infi.pyutils.lazy import cached_method
 from infi.diskmanagement.ioctl import GUID_ZERO, _sizeof
 from infi.instruct import Struct, BitFields, BitField, BitPadding, ULInt32
 from string import ascii_uppercase
@@ -53,23 +54,12 @@ class MountManager(object):
         return input_buffer
 
     def _iter_volume_mount_points(self, volume):
-        from infi.wioctl.errors import WindowsException
         input_buffer = self._create_input_buffer_for_query_points_ioctl(volume)
-        try:
-            output_buffer = self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer) + 1)
-        except WindowsException:
-            return
-        else:
-            struct = structures.MOUNTMGR_MOUNT_POINTS.create_from_string(output_buffer)
-            for item in struct.MountPoints:
-                offset, length = item.SymbolicLinkNameOffset, item.SymbolicLinkNameLength
-                yield _slice_unicode_string_from_buffer(output_buffer, offset, length)
-
-    def get_volume_guid(self, volume):
-        # there must be a volume guid
-        [volume_guid] = [item for item in self._iter_volume_mount_points(volume) if
-                         item.startswith(r"\??\Volume")]
-        return volume_guid.replace(r"\?", r"\\")
+        output_buffer = self._io.ioctl_mountmgr_query_points(input_buffer, len(input_buffer) + 1)
+        struct = structures.MOUNTMGR_MOUNT_POINTS.create_from_string(output_buffer)
+        for item in struct.MountPoints:
+            offset, length = item.SymbolicLinkNameOffset, item.SymbolicLinkNameLength
+            yield _slice_unicode_string_from_buffer(output_buffer, offset, length)
 
     def get_volume_drive_letter(self, volume):
         for item in self._iter_volume_mount_points(volume):
@@ -128,13 +118,19 @@ class MountManager(object):
     def disable_auto_mount(self):
         return self._io.ioctl_mountmgr_set_auto_mount(MOUNTMGR_AUTO_MOUNT_STATE_DISABLED)
 
+    @cached_method
+    def get_volume_extents(self, volume_guid):
+        return DeviceIoControl(volume_guid, False).ioctl_volume_get_volume_disk_extents().Extents
+
+    @cached_method
+    def get_volume_guids(self):
+        return list(self.iter_volume_guids())
+
     def iter_volume_guids(self):
         buffer, length = _get_unicode_buffer()
         search_handle = None
         try:
             search_handle = FindFirstVolumeW(buffer, length)
-            if buffer.value:
-                yield buffer.value
             while True:
                 if buffer.value:
                     yield buffer.value
