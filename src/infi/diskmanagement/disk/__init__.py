@@ -1,4 +1,3 @@
-
 from capacity import byte, MiB
 from infi.pyutils.lazy import cached_method, clear_cache
 from infi.pyutils.decorators import wraps
@@ -96,10 +95,15 @@ class Volume(object):
     def _get_wmi_object(self):
         from ..wmi import WmiClient, iter_volumes
         from infi.devicemanager.ioctl import DeviceIoControl
+        from infi.wioctl.errors import WindowsException
         client = WmiClient()
         expected = self._get_device_number()
         def _filter(volume):
-            actual = DeviceIoControl(volume.DeviceID.rstrip(r'\\')).storage_get_device_and_partition_number()
+            try:
+                actual = DeviceIoControl(volume.DeviceID.rstrip(r'\\')).storage_get_device_and_partition_number()
+            except WindowsException as e:
+                if e.winerror == 1: # Floppy/CD/..
+                    return False
             return actual == expected
         return filter(_filter, iter_volumes(client))[0]
 
@@ -120,7 +124,7 @@ class Volume(object):
             volume_guid = volume_guid.rstrip("\\")
             try:
                 extents = self._mount_manager.get_volume_extents(volume_guid)
-            except WindowsException,e:
+            except WindowsException as e:
                 if e.winerror == 1: # Floppy/CD/..
                     continue
                 raise
