@@ -136,8 +136,8 @@ class Volume(object):
                 if extent_info[0] >= partition_info[0] and sum(extent_info) <= sum(partition_info):
                     return volume_guid
 
-    def get_moint_points(self):
-        return self._mount_manager.get_volume_mount_points(self)
+    def get_mount_points(self):
+        return self._mount_manager.get_volume_mount_points(self.get_volume_guid())
 
     def add_mount_point(self, mount_point):
         return self._mount_manager.add_volume_mount_point(self.get_volume_guid(), mount_point)
