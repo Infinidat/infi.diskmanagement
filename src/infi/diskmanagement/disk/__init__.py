@@ -111,7 +111,7 @@ class Volume(object):
             try:
                 actual = DeviceIoControl(volume.DeviceID.rstrip(r'\\')).storage_get_device_and_partition_number()
             except WindowsException as e:
-                if e.winerror == 1: # Floppy/CD/..
+                if e.winerror == 1:    # Floppy/CD/..
                     return False
             return actual == expected
         return filter(_filter, iter_volumes(client))[0]
