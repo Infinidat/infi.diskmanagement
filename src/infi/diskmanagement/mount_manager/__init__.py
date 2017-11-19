@@ -39,10 +39,9 @@ class MountManager(object):
                                              [field.name for field in struct._fields_.fields[2:26]])]
 
     def _create_input_buffer_for_query_points_ioctl(self, volume):
-        volume_guid = getattr(volume, "_path", volume).split('\\')[-1]
-        device_name = r"\Device\{}".format(volume_guid)
+        volume_partition_number = getattr(volume, "_partition_number", volume)
+        device_name = r"\Device\HarddiskVolume{}".format(volume_partition_number)
         unicode_buffer = ctypes.create_unicode_buffer(device_name)
-        from os.path import sep
         buffer_string = ctypes.string_at(ctypes.addressof(unicode_buffer),
                                          len(unicode_buffer) * ctypes.sizeof(ctypes.c_wchar))
         triplet = structures.MOUNTMGR_MOUNT_POINT(SymbolicLinkNameOffset=0, SymbolicLinkNameLength=0,

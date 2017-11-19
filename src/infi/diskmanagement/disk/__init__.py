@@ -77,6 +77,14 @@ class Volume(object):
     def _path(self):
         return self.get_volume_guid()
 
+    @property
+    def _device_number(self):
+        return self._get_device_and_partition_number()[0]
+
+    @property
+    def _partition_number(self):
+        return self._get_device_and_partition_number()[1]
+
     def __repr__(self):
         try:
             return "Volume <{}>".format(self._path)
@@ -87,7 +95,8 @@ class Volume(object):
     def get_from_disk_and_partition(cls, disk, partition, mount_manager=None):
         return Volume(disk, partition, mount_manager=mount_manager)
 
-    def _get_device_number(self):
+    @cached_method
+    def _get_device_and_partition_number(self):
         from infi.devicemanager.ioctl import DeviceIoControl
         return DeviceIoControl(self._path).storage_get_device_and_partition_number()
 
@@ -97,7 +106,7 @@ class Volume(object):
         from infi.devicemanager.ioctl import DeviceIoControl
         from infi.wioctl.errors import WindowsException
         client = WmiClient()
-        expected = self._get_device_number()
+        expected = self._get_device_and_partition_number()
         def _filter(volume):
             try:
                 actual = DeviceIoControl(volume.DeviceID.rstrip(r'\\')).storage_get_device_and_partition_number()
