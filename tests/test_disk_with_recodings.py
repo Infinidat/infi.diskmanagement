@@ -36,7 +36,7 @@ class GetLayoutTestCase(Base):
         with self._ioctl_disk_get_drive_layout_ex as mock:
             with open("drive_layout_{}".format(disk_number), 'rb') as fd:
                 mock.return_value = DRIVE_LAYOUT_INFORMATION_EX.create_from_string(fd.read())
-                io = Disk(1)
+                io = Disk(0)
                 layout = io._get_layout()
                 self.assertEqual(len(layout.PartitionEntry), EXPECTED_NUMBERS_OF_PARTITIONS[disk_number])
 
@@ -47,7 +47,7 @@ class GetPartitionsTestCase(Base):
         with self._ioctl_disk_get_drive_layout_ex as mock:
             with open("drive_layout_{}".format(disk_number), 'rb') as fd:
                 mock.return_value = DRIVE_LAYOUT_INFORMATION_EX.create_from_string(fd.read())
-                io = Disk(1)
+                io = Disk(0)
                 partitions = io.get_partitions()
                 for partition in partitions:
                     self.assertIn(partition._struct.PartitionStyle, [0, 1, ])
@@ -58,7 +58,7 @@ class GetPartitionsTestCase(Base):
             with open("drive_layout_{}".format(disk_number), 'rb') as fd:
                 string = fd.read()
                 mock.return_value = DRIVE_LAYOUT_INFORMATION_EX.create_from_string(string)
-                io = Disk(1)
+                io = Disk(0)
                 layout = io._get_layout()
                 self.assertEqual(layout.PartitionStyle, 0) # :0
                 self.assertEqual(layout.PartitionCount, 4) # :4
