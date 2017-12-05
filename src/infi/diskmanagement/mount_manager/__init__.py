@@ -10,18 +10,23 @@ import ctypes
 
 MAX_PATH_NAMES = 32767
 
+
 class AVAILABLE_DRIVE_LETTERS(Struct):
     _fields_ = BitFields(*([BitField(letter, 1) for letter in ascii_uppercase] + [BitPadding(6), ]))
+
 
 def _slice_unicode_string_from_buffer(buffer, offset, length):
     return ctypes.wstring_at(ctypes.addressof(buffer) + offset, length / ctypes.sizeof(ctypes.c_wchar))
 
+
 def _rstrip(string):
     return string.rstrip(u'\\')
+
 
 def _get_unicode_buffer(size=MAX_PATH_NAMES):
     buffer = create_unicode_buffer(size)
     return buffer, size
+
 
 class MountManager(object):
     def __init__(self):
@@ -36,13 +41,12 @@ class MountManager(object):
         bitmask = ctypes.windll.kernel32.GetLogicalDrives()
         struct = AVAILABLE_DRIVE_LETTERS.create_from_string(ULInt32.write_to_string(bitmask))
         return [u"{}:\\".format(letter) for letter in filter(lambda letter: getattr(struct, letter) == 0,
-                                             [field.name for field in struct._fields_.fields[2:26]])]
+                [field.name for field in struct._fields_.fields[2:26]])]
 
     def _create_input_buffer_for_query_points_ioctl(self, volume):
-        volume_guid = getattr(volume, "_path", volume).split('\\')[-1]
-        device_name = r"\Device\{}".format(volume_guid)
+        volume_partition_number = getattr(volume, "_partition_number", volume)
+        device_name = r"\Device\HarddiskVolume{}".format(volume_partition_number)
         unicode_buffer = ctypes.create_unicode_buffer(device_name)
-        from os.path import sep
         buffer_string = ctypes.string_at(ctypes.addressof(unicode_buffer),
                                          len(unicode_buffer) * ctypes.sizeof(ctypes.c_wchar))
         triplet = structures.MOUNTMGR_MOUNT_POINT(SymbolicLinkNameOffset=0, SymbolicLinkNameLength=0,
@@ -189,6 +193,7 @@ class GetVolumePathNamesForVolumeNameW(WrappedFunction):
                 (DWORD, IN, "bufferLength", DWORD(MAX_PATH_NAMES)),
                 (POINTER(DWORD), IN_OUT, "returnLength"))
 
+
 class SetVolumeMountPointW(WrappedFunction):
     return_value = infi.wioctl.api.BOOL
 
@@ -205,6 +210,7 @@ class SetVolumeMountPointW(WrappedFunction):
         return ((LPCWSTR, IN, "volumeMountPoint"),
                 (LPCWSTR, IN, "volumeName"))
 
+
 class DeleteVolumeMountPointW(WrappedFunction):
     return_value = infi.wioctl.api.BOOL
 
@@ -220,7 +226,9 @@ class DeleteVolumeMountPointW(WrappedFunction):
     def get_parameters(cls):
         return ((LPCWSTR, IN, "volumeMountPoint"),)
 
+
 from infi.wioctl.api import HANDLE, errcheck_invalid_handle, WindowsException
+
 
 class FindFirstVolumeW(WrappedFunction):
     return_value = HANDLE
@@ -238,6 +246,7 @@ class FindFirstVolumeW(WrappedFunction):
         return ((LPCWSTR, IN_OUT, "volumeName"),
                 (DWORD, IN, "bufferLength"))
 
+
 class FindVolumeClose(WrappedFunction):
     return_value = HANDLE
 
@@ -252,6 +261,7 @@ class FindVolumeClose(WrappedFunction):
     @classmethod
     def get_parameters(cls):
         return ((HANDLE, IN, "findVolume"),)
+
 
 class FindNextVolumeW(WrappedFunction):
     return_value = infi.wioctl.api.BOOL
@@ -272,6 +282,7 @@ class FindNextVolumeW(WrappedFunction):
 
 ERROR_NO_MORE_FILES = 18
 
+
 class FindFirstVolumeMountPointW(WrappedFunction):
     return_value = HANDLE
 
@@ -289,6 +300,7 @@ class FindFirstVolumeMountPointW(WrappedFunction):
                 (LPWSTR, IN_OUT, "volumeMountPoint"),
                 (DWORD, IN, "bufferLength"))
 
+
 class FindVolumeMountPointClose(WrappedFunction):
     return_value = HANDLE
 
@@ -303,6 +315,7 @@ class FindVolumeMountPointClose(WrappedFunction):
     @classmethod
     def get_parameters(cls):
         return ((HANDLE, IN, "findVolumeMountPoint"),)
+
 
 class FindNextVolumeMountPointW(WrappedFunction):
     return_value = infi.wioctl.api.BOOL
@@ -320,6 +333,7 @@ class FindNextVolumeMountPointW(WrappedFunction):
         return ((HANDLE, IN, "findVolumeMountPoint"),
                 (LPWSTR, IN_OUT, "volumeMountPoint"),
                 (DWORD, IN, "bufferLength"))
+
 
 class GetVolumeInformationW(WrappedFunction):
     return_value = infi.wioctl.api.BOOL

@@ -43,6 +43,7 @@ def generate_signature():
 
 GUID_ZERO = infi.wioctl.structures.GUID.create_from_string(ctypes.c_buffer('\x00' * 16))
 
+
 class DeviceIoControl(infi.wioctl.DeviceIoControl):
     def _partial_ioctl_diks_get_drive_layout_ex(self, size=24):
         """:returns: a `ctypes.c_buffer` object"""
@@ -218,4 +219,3 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
 
     def ioctl_disk_update_properties(self):
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_UPDATE_PROPERTIES, 0, 0, 0, 0)
-

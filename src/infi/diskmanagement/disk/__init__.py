@@ -77,6 +77,14 @@ class Volume(object):
     def _path(self):
         return self.get_volume_guid()
 
+    @property
+    def _device_number(self):
+        return self._get_device_and_partition_number()[0]
+
+    @property
+    def _partition_number(self):
+        return self._get_device_and_partition_number()[1]
+
     def __repr__(self):
         try:
             return "Volume <{}>".format(self._path)
@@ -87,7 +95,8 @@ class Volume(object):
     def get_from_disk_and_partition(cls, disk, partition, mount_manager=None):
         return Volume(disk, partition, mount_manager=mount_manager)
 
-    def _get_device_number(self):
+    @cached_method
+    def _get_device_and_partition_number(self):
         from infi.devicemanager.ioctl import DeviceIoControl
         return DeviceIoControl(self._path).storage_get_device_and_partition_number()
 
@@ -97,12 +106,12 @@ class Volume(object):
         from infi.devicemanager.ioctl import DeviceIoControl
         from infi.wioctl.errors import WindowsException
         client = WmiClient()
-        expected = self._get_device_number()
+        expected = self._get_device_and_partition_number()
         def _filter(volume):
             try:
                 actual = DeviceIoControl(volume.DeviceID.rstrip(r'\\')).storage_get_device_and_partition_number()
             except WindowsException as e:
-                if e.winerror == 1: # Floppy/CD/..
+                if e.winerror == 1:    # Floppy/CD/..
                     return False
             return actual == expected
         return filter(_filter, iter_volumes(client))[0]
@@ -271,6 +280,8 @@ class Disk(object):
         super(Disk, self).__init__()
         self._number = disk_number
         self._path = r"\\.\PHYSICALDRIVE{}".format(self._number)
+        if not self._is_path_valid(self._path):
+            raise RuntimeError("Invalid disk number: {0}".format(self._number))
         self._io = DeviceIoControl(self._path, True)
 
     def __repr__(self):
@@ -285,6 +296,15 @@ class Disk(object):
         self._io.ioctl_disk_set_drive_layout_ex(layout)
         self.wait_for_all_volumes()
         self.clear_cached_properties()
+
+    def _get_disk_drives(self):
+        from infi.diskmanagement import wmi
+        client = wmi.WmiClient()
+        drives = wmi.get_disk_drives(client)
+        return drives
+
+    def _is_path_valid(self, path):
+        return path in self._get_disk_drives()
 
     def wait_for_all_volumes(self):
         from time import sleep
