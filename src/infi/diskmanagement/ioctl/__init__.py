@@ -55,7 +55,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         buffer = ctypes.c_buffer('\x00' * size, size)
         try:
             self.ioctl(infi.wioctl.constants.IOCTL_DISK_GET_DRIVE_LAYOUT_EX, 0, 0, buffer, size)
-        except infi.wioctl.api.WindowsException, e:
+        except infi.wioctl.api.WindowsException as e:
             if e.winerror != infi.wioctl.constants.ERROR_INSUFFICIENT_BUFFER:
                 raise
             return self._partial_ioctl_diks_get_drive_layout_ex(size * 2)
@@ -98,7 +98,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
     def _bool_ioctl(self, ioctl_number):
         try:
             self.ioctl(ioctl_number, 0, 0, 0, 0)
-        except infi.wioctl.api.WindowsException, e:
+        except infi.wioctl.api.WindowsException as e:
             if e.winerror != 1:
                 raise
             return False
@@ -159,7 +159,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         buffer = ctypes.c_buffer('\x00' * size, size)
         try:
             self.ioctl(infi.wioctl.constants.IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, 0, 0, buffer, size)
-        except infi.wioctl.api.WindowsException, e:
+        except infi.wioctl.api.WindowsException as e:
             if e.winerror != infi.wioctl.constants.ERROR_MORE_DATA:
                 raise
             return self._partial_ioctl_volume_get_volume_disk_extents(size + _sizeof(structures.DISK_EXTENT))
@@ -174,7 +174,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         buffer = ctypes.c_buffer('\x00' * size, size)
         try:
             self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_POINTS, input_buffer, input_buffer_size, buffer, size)
-        except infi.wioctl.api.WindowsException, e:
+        except infi.wioctl.api.WindowsException as e:
             if e.winerror != infi.wioctl.constants.ERROR_MORE_DATA:
                 raise
             return self._partial_ioctl_mountmgr_query_points(input_buffer, input_buffer_size, size * 2)
@@ -212,7 +212,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         buffer = ctypes.c_buffer('\x00' * size, size)
         try:
             self.ioctl(infi.wioctl.constants.IOCTL_DISK_UPDATE_DRIVE_SIZE, 0, 0, buffer, size)
-        except infi.wioctl.api.WindowsException, e:
+        except infi.wioctl.api.WindowsException as e:
             if e.winerror == infi.wioctl.constants.ERROR_INSUFFICIENT_BUFFER:
                 return
             raise

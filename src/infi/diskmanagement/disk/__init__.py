@@ -58,7 +58,7 @@ def from_large_integer(instance):
 def partition_type_specific(func):
     @wraps(func)
     def callee(*args, **kwargs):
-        _name = func.func_name
+        _name = func.__name__
         _self, args = args[0], args[1:]
         _type = _self._get_named_type()
         return getattr(_self, '_{}_{}'.format(_name, _type))(*args, **kwargs)
@@ -267,7 +267,7 @@ class Partition(object):
         _struct.BytesToGrow = to_large_integer(size_in_bytes - self.get_size_in_bytes())
         try:
             self._disk._io.ioctl_disk_grow_partition(_struct)
-        except infi.wioctl.api.WindowsException, e:
+        except infi.wioctl.api.WindowsException as e:
             if e.winerror != ERROR_INVALID_PARAMETER:
                 raise
             _struct.BytesToGrow = to_large_integer(size_in_bytes - self.get_size_in_bytes() - 32000)
