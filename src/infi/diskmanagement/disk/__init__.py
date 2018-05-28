@@ -116,12 +116,12 @@ class Volume(object):
             return actual == expected
         return filter(_filter, iter_volumes(client))[0]
 
-    def format(self, quick=True, file_system="NTFS"):
+    def format(self, quick=True, file_system="NTFS", cluster_size=0):
         # TODO the idea is to do only the formatting through wmi
         # next step is to figure out to quickly get from the setuapi and ioctl information to the wmi object
         self.online()
         wmi_object = self._get_wmi_object()
-        wmi_object.Format(QuickFormat=quick, FileSystem=file_system)
+        wmi_object.Format(QuickFormat=quick, FileSystem=file_system, ClusterSize=cluster_size)
 
     def get_volume_guid(self):
         from infi.wioctl.errors import WindowsException
