@@ -4,6 +4,7 @@ from infi.pyutils.lazy import cached_method
 
 DISKDRIVES_QUERY = "SELECT * FROM Win32_DiskDrive"
 VOLUME_QUERY = "SELECT * FROM Win32_Volume"
+VOLUME_CLUSTER_SIZE_QUERY = "SELECT Name, Blocksize FROM Win32_Volume WHERE FileSystem='NTFS'"
 DISKDRIVE_TO_DISKPARTITIONS_QUERY = r'SELECT * FROM Win32_DiskDriveToDiskPartition WHERE Antecedent="{}"'
 DISKPARTITION_QUERY = r'SELECT * FROM Win32_DiskPartition WHERE DeviceID={}'
 
@@ -31,6 +32,14 @@ class Volume(WmiObject):
     @property
     def DeviceID(self):
         return self.get_wmi_attribute("DeviceID")
+
+    @property
+    def Name(self):
+        return self.get_wmi_attribute("Name")
+
+    @property
+    def Blocksize(self):
+        return self.get_wmi_attribute("Blocksize")
 
     def Format(self, ClusterSize=0, EnableCompression=False, FileSystem="NTFS", QuickFormat=True):
         method = self._object.Methods_("Format")

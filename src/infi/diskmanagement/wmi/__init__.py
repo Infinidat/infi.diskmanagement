@@ -3,7 +3,7 @@ __import__("pkg_resources").declare_namespace(__name__)
 import re
 from infi.wmi import WmiClient, WmiObject
 from .model import DiskDrive, DiskPartition, DISKDRIVES_QUERY, DISKPARTITION_QUERY
-from .model import DISKDRIVE_TO_DISKPARTITIONS_QUERY
+from .model import DISKDRIVE_TO_DISKPARTITIONS_QUERY, VOLUME_CLUSTER_SIZE_QUERY, Volume
 
 def escape_string(string):
     return re.sub("[\\\\'\"]", '\\\\\\g<0>', string)
@@ -31,3 +31,10 @@ def iter_volumes(wmi_client):
     from .model import Volume, VOLUME_QUERY
     for item in wmi_client.execute_query(VOLUME_QUERY):
         yield Volume(item)
+
+def get_volumes_cluster_sizes(wmi_client):
+    volumes = dict()
+    for result in wmi_client.execute_query(VOLUME_CLUSTER_SIZE_QUERY):
+        volume = Volume(result)
+        volumes[volume.Name] = int(volume.Blocksize)
+    return volumes

@@ -303,6 +303,12 @@ class Disk(object):
         drives = wmi.get_disk_drives(client)
         return drives
 
+    def _get_volumes_cluster_sizes(self):
+        from infi.diskmanagement import wmi
+        client = wmi.WmiClient()
+        sizes = wmi.get_volumes_cluster_sizes(client)
+        return sizes
+
     def _is_path_valid(self, path):
         return path in self._get_disk_drives()
 
