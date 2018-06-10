@@ -23,7 +23,11 @@ volume.assign_first_available_drive_letter() if not volume.has_drive_letter() el
 Checking out the code
 =====================
 
-Run the following:
+To run this code from the repository for development purposes, run the following:
 
     easy_install -U infi.projector
     projector devenv build
+
+Python 3
+========
+Python 3 support is experimental and untested at this stage.

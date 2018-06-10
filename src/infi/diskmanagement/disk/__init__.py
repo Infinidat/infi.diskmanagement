@@ -58,7 +58,7 @@ def from_large_integer(instance):
 def partition_type_specific(func):
     @wraps(func)
     def callee(*args, **kwargs):
-        _name = func.func_name
+        _name = func.__name__
         _self, args = args[0], args[1:]
         _type = _self._get_named_type()
         return getattr(_self, '_{}_{}'.format(_name, _type))(*args, **kwargs)
@@ -116,12 +116,12 @@ class Volume(object):
             return actual == expected
         return filter(_filter, iter_volumes(client))[0]
 
-    def format(self, quick=True, file_system="NTFS"):
+    def format(self, quick=True, file_system="NTFS", cluster_size=0):
         # TODO the idea is to do only the formatting through wmi
         # next step is to figure out to quickly get from the setuapi and ioctl information to the wmi object
         self.online()
         wmi_object = self._get_wmi_object()
-        wmi_object.Format(QuickFormat=quick, FileSystem=file_system)
+        wmi_object.Format(QuickFormat=quick, FileSystem=file_system, ClusterSize=cluster_size)
 
     def get_volume_guid(self):
         from infi.wioctl.errors import WindowsException
@@ -267,7 +267,7 @@ class Partition(object):
         _struct.BytesToGrow = to_large_integer(size_in_bytes - self.get_size_in_bytes())
         try:
             self._disk._io.ioctl_disk_grow_partition(_struct)
-        except infi.wioctl.api.WindowsException, e:
+        except infi.wioctl.api.WindowsException as e:
             if e.winerror != ERROR_INVALID_PARAMETER:
                 raise
             _struct.BytesToGrow = to_large_integer(size_in_bytes - self.get_size_in_bytes() - 32000)
@@ -302,6 +302,12 @@ class Disk(object):
         client = wmi.WmiClient()
         drives = wmi.get_disk_drives(client)
         return drives
+
+    def _get_volumes_cluster_sizes(self):
+        from infi.diskmanagement import wmi
+        client = wmi.WmiClient()
+        sizes = wmi.get_volumes_cluster_sizes(client)
+        return sizes
 
     def _is_path_valid(self, path):
         return path in self._get_disk_drives()

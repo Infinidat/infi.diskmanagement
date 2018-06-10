@@ -40,8 +40,11 @@ class MountManager(object):
     def get_avaialable_drive_letters(self):
         bitmask = ctypes.windll.kernel32.GetLogicalDrives()
         struct = AVAILABLE_DRIVE_LETTERS.create_from_string(ULInt32.write_to_string(bitmask))
-        return [u"{}:\\".format(letter) for letter in filter(lambda letter: getattr(struct, letter) == 0,
-                [field.name for field in struct._fields_.fields[2:26]])]
+        return [u"{}:\\".format(letter) for letter in
+                [letter for letter in
+                    [field.name for field in struct._fields_.fields[2:26]]
+                    if getattr(struct, letter) == 0]
+               ]
 
     def _create_input_buffer_for_query_points_ioctl(self, volume):
         volume_partition_number = getattr(volume, "_partition_number", volume)
@@ -77,8 +80,9 @@ class MountManager(object):
         returnLength = DWORD(0)
         GetVolumePathNamesForVolumeNameW(volumeName=volume_guid, volumePathNames=volumePathNames,
                                          returnLength=returnLength)
-        return filter(lambda string: string != u'',
-                      ctypes.wstring_at(ctypes.addressof(volumePathNames), returnLength.value).split(u"\x00"))
+        return [string for string in
+                ctypes.wstring_at(ctypes.addressof(volumePathNames), returnLength.value).split(u"\x00")
+                if string != u'']
 
     def add_volume_mount_point(self, volume_guid, mount_point):
         if not volume_guid.endswith('\\'):
@@ -110,7 +114,7 @@ class MountManager(object):
         try:
             SetVolumeLabelW(rootPathName=create_unicode_buffer(mount_point),
                             volumeName=create_unicode_buffer(label))
-        except WindowsException, e:
+        except WindowsException as e:
             raise
 
     def is_auto_mount(self):
@@ -139,7 +143,7 @@ class MountManager(object):
                 if buffer.value:
                     yield buffer.value
                 FindNextVolumeW(search_handle, buffer, length)
-        except WindowsException, e:
+        except WindowsException as e:
             if e.winerror != ERROR_NO_MORE_FILES:
                 raise
         finally:
