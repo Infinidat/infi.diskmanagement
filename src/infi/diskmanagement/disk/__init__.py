@@ -196,8 +196,7 @@ class Partition(object):
 
     def is_ldm(self):
         partition_type = self._struct.union.PartitionType
-        return partition_type.Data1 == LDM_GUID.Data1 and partition_type.Data2 == LDM_GUID.Data2 and \
-               partition_type.Data3 == LDM_GUID.Data3 and partition_type.Data4 == LDM_GUID.Data4
+        return partition_type == LDM_GUID
 
     def is_empty(self):
         return is_zero(self._struct.PartitionLength)
