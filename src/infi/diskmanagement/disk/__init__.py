@@ -18,9 +18,9 @@ def is_zero(large_integer):
     return large_integer.LowPart == 0 and large_integer.HighPart == 0
 
 # http://msdn.microsoft.com/en-us/windows/hardware/gg463525
-PARTITION_BASIC_DATA_GUID = GUID(Data1=0xEBD0A0A2L, Data2=0xB9E5, Data3=0x4433,
+PARTITION_BASIC_DATA_GUID = GUID(Data1=0xEBD0A0A2, Data2=0xB9E5, Data3=0x4433,
                                  Data4=[0x87, 0xC0, 0x68, 0xB6, 0xB7, 0x26, 0x99, 0xC7])
-PARTITION_MSFT_RESERVED_GUID = GUID(Data1=0xE3C9E316L, Data2=0x0B5C, Data3=0x4DB8,
+PARTITION_MSFT_RESERVED_GUID = GUID(Data1=0xE3C9E316, Data2=0x0B5C, Data3=0x4DB8,
                                     Data4=[0x81, 0x7D, 0xF9, 0x2D, 0xF0, 0x02, 0x15, 0xAE])
 # https://docs.microsoft.com/en-us/previous-versions/windows/hardware/design/dn640535(v=vs.85)#what-about-dynamic-disks
 LDM_GUID = GUID(Data1=0xAF9B60A0, Data2=0x1431, Data3=0x4F62, Data4=[0xBC, 0x68, 0x33, 0x11, 0x71, 0x4A, 0x69, 0xAD])
