@@ -41,7 +41,7 @@ def generate_signature():
     import random
     return random.randint(0, 2 ** 32 - 1)
 
-GUID_ZERO = infi.wioctl.structures.GUID.create_from_string(ctypes.c_buffer('\x00' * 16))
+GUID_ZERO = infi.wioctl.structures.GUID.create_from_string(b'\x00' * 16)
 
 
 class DeviceIoControl(infi.wioctl.DeviceIoControl):

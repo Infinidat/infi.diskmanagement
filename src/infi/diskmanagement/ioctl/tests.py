@@ -19,7 +19,7 @@ class CreateDiskTestCase(unittest.TestCase):
         CREATE_DISK_MBR.write_to_string(struct)
 
     def _get_guid(self):
-        struct = GUID.create_from_string('1' * 16)
+        struct = GUID.create_from_string(b'1' * 16)
         return struct
 
     def test_guid(self):
@@ -44,8 +44,7 @@ class CreateDiskTestCase(unittest.TestCase):
 
 class StructuresTestCase(unittest.TestCase):
     def test_partition_information__mbr(self):
-        buffer = ctypes.c_buffer("\x00" * 137, 137)
-        struct = PARTITION_INFORMATION_EX.create_from_string(buffer)
+        struct = PARTITION_INFORMATION_EX.create_from_string(b"\x00" * 137)
 
     def test_create_disk__mbr(self):
         """:param partition_style: int
@@ -61,7 +60,7 @@ class StructuresTestCase(unittest.TestCase):
         else:
             klass = CREATE_DISK_GPT
             union = klass()
-            union.DiskId = GUID.create_from_string("\x00"*16)
+            union.DiskId = GUID.create_from_string(b"\x00"*16)
             union.MaxPartitionCount = 128
         struct.union = union
         size = struct.min_max_sizeof().max

@@ -12,4 +12,4 @@ class InputBufferTestCase(unittest.TestCase):
         size = ctypes.sizeof(ctypes.c_wchar)
         m = MountManager()
         buffer = m._create_input_buffer_for_query_points_ioctl(MockVolume())
-        self.assertEqual(buffer.raw[0 - size - 1:], '\x00' * (size + 1))
+        self.assertEqual(buffer.raw[0 - size - 1:], b'\x00' * (size + 1))
