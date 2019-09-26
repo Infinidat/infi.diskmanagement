@@ -36,5 +36,5 @@ def get_volumes_cluster_sizes(wmi_client):
     volumes = dict()
     for result in wmi_client.execute_query(VOLUME_CLUSTER_SIZE_QUERY):
         volume = Volume(result)
-        volumes[volume.DeviceID.rstrip('\\')] = int(volume.Blocksize)
+        volumes[volume.DeviceID] = int(volume.Blocksize)
     return volumes
