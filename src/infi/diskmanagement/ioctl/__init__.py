@@ -33,7 +33,7 @@ class CoCreateGuid(infi.wioctl.api.WrappedFunction):
 
 def generate_guid():
     size = _sizeof(infi.wioctl.structures.GUID)
-    buffer = ctypes.c_buffer('\x00' * size)
+    buffer = ctypes.c_buffer(b'\x00' * size)
     CoCreateGuid(buffer)
     return infi.wioctl.structures.GUID.create_from_string(buffer)
 
@@ -52,7 +52,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         # caller should send this IOCTL request in a loop.
         # Every time the storage stack rejects the IOCTL with an error message indicating that the buffer was too small,
         # caller should double the buffer size.
-        buffer = ctypes.c_buffer('\x00' * size, size)
+        buffer = ctypes.c_buffer(b'\x00' * size, size)
         try:
             self.ioctl(infi.wioctl.constants.IOCTL_DISK_GET_DRIVE_LAYOUT_EX, 0, 0, buffer, size)
         except infi.wioctl.api.WindowsException as e:
@@ -68,7 +68,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
     def ioctl_disk_set_drive_layout_ex(self, layout):
         size = layout.sizeof(layout)
         input_buffer = ctypes.c_buffer(layout.write_to_string(layout))
-        output_buffer = ctypes.c_buffer('\x00' * size, size)
+        output_buffer = ctypes.c_buffer(b'\x00' * size, size)
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_SET_DRIVE_LAYOUT_EX, input_buffer, size, output_buffer, size)
 
     def ioctl_disk_delete_drive_layout(self):
@@ -125,7 +125,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
     def ioctl_disk_get_disk_attributes(self):
         klass = structures.GET_DISK_ATTRIBUTES
         size = _sizeof(klass)
-        buffer = ctypes.c_buffer('\x00' * size, size)
+        buffer = ctypes.c_buffer(b'\x00' * size, size)
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_GET_DISK_ATTRIBUTES, 0, 0, buffer, size)
         return klass.create_from_string(buffer)
 
@@ -137,7 +137,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
     def ioctl_disk_get_san_settings(self):
         klass = structures.DISK_SAN_SETTINGS
         size = _sizeof(klass)
-        buffer = ctypes.c_buffer('\x00' * size, size)
+        buffer = ctypes.c_buffer(b'\x00' * size, size)
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_GET_SAN_SETTINGS, 0, 0, buffer, size)
         return klass.create_from_string(buffer)
 
@@ -150,13 +150,13 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
     def ioctl_volume_query_volume_number(self):
         klass = structures.VOLUME_NUMBER
         size = _sizeof(klass)
-        buffer = ctypes.c_buffer('\x00' * size, size)
+        buffer = ctypes.c_buffer(b'\x00' * size, size)
         self.ioctl(infi.wioctl.constants.IOCTL_VOLUME_QUERY_VOLUME_NUMBER, 0, 0, buffer, size)
         return klass.create_from_string(buffer)
 
     def _partial_ioctl_volume_get_volume_disk_extents(self, size):
         klass = structures.VOLUME_DISK_EXTENTS
-        buffer = ctypes.c_buffer('\x00' * size, size)
+        buffer = ctypes.c_buffer(b'\x00' * size, size)
         try:
             self.ioctl(infi.wioctl.constants.IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, 0, 0, buffer, size)
         except infi.wioctl.api.WindowsException as e:
@@ -171,7 +171,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
 
     def _partial_ioctl_mountmgr_query_points(self, input_buffer, input_buffer_size, size=256):
         """:returns: a `ctypes.c_buffer` object"""
-        buffer = ctypes.c_buffer('\x00' * size, size)
+        buffer = ctypes.c_buffer(b'\x00' * size, size)
         try:
             self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_POINTS, input_buffer, input_buffer_size, buffer, size)
         except infi.wioctl.api.WindowsException as e:
@@ -186,7 +186,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
     def ioctl_mountmgr_query_auto_mount(self):
         klass = structures.MOUNTMGR_QUERY_AUTO_MOUNT
         size = _sizeof(klass)
-        buffer = ctypes.c_buffer('\x00' * size, size)
+        buffer = ctypes.c_buffer(b'\x00' * size, size)
         self.ioctl(infi.wioctl.constants.IOCTL_MOUNTMGR_QUERY_AUTO_MOUNT, 0, 0, buffer, size)
         return klass.create_from_string(buffer).CurrentState
 
@@ -209,7 +209,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
 
     def ioctl_disk_update_drive_size(self):
         size = _sizeof(structures.DISK_GEOMETRY)
-        buffer = ctypes.c_buffer('\x00' * size, size)
+        buffer = ctypes.c_buffer(b'\x00' * size, size)
         try:
             self.ioctl(infi.wioctl.constants.IOCTL_DISK_UPDATE_DRIVE_SIZE, 0, 0, buffer, size)
         except infi.wioctl.api.WindowsException as e:
