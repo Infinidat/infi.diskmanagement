@@ -116,7 +116,7 @@ class Volume(object):
                 if e.winerror == 1:    # Floppy/CD/..
                     return False
             return actual == expected
-        return filter(_filter, iter_volumes(client))[0]
+        return list(filter(_filter, iter_volumes(client)))[0]
 
     def format(self, quick=True, file_system="NTFS", cluster_size=0):
         # TODO the idea is to do only the formatting through wmi
