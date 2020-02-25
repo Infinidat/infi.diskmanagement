@@ -202,7 +202,7 @@ class DeviceIoControl(infi.wioctl.DeviceIoControl):
         self.ioctl(infi.wioctl.constants.IOCTL_DISK_GROW_PARTITION, input_buffer, size, 0, 0)
 
     def ioctl_extend_volume(self, new_size):
-        size_in_sectors = ctypes.c_longlong(new_size / 512)
+        size_in_sectors = ctypes.c_longlong(new_size // 512)
         self.ioctl(infi.wioctl.constants.FSCTL_EXTEND_VOLUME,
                    ctypes.byref(size_in_sectors),
                    ctypes.sizeof(size_in_sectors), 0, 0)
