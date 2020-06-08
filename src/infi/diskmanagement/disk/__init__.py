@@ -116,7 +116,7 @@ class Volume(object):
                 if e.winerror == 1:    # Floppy/CD/..
                     return False
             return actual == expected
-        return filter(_filter, iter_volumes(client))[0]
+        return list(filter(_filter, iter_volumes(client)))[0]
 
     def format(self, quick=True, file_system="NTFS", cluster_size=0):
         # TODO the idea is to do only the formatting through wmi
@@ -286,8 +286,6 @@ class Disk(object):
         super(Disk, self).__init__()
         self._number = disk_number
         self._path = r"\\.\PHYSICALDRIVE{}".format(self._number)
-        if not self._is_path_valid(self._path):
-            raise RuntimeError("Invalid disk number: {0}".format(self._number))
         self._io = DeviceIoControl(self._path, True)
 
     def __repr__(self):
@@ -303,20 +301,11 @@ class Disk(object):
         self.wait_for_all_volumes()
         self.clear_cached_properties()
 
-    def _get_disk_drives(self):
-        from infi.diskmanagement import wmi
-        client = wmi.WmiClient()
-        drives = wmi.get_disk_drives(client)
-        return drives
-
     def _get_volumes_cluster_sizes(self):
         from infi.diskmanagement import wmi
         client = wmi.WmiClient()
         sizes = wmi.get_volumes_cluster_sizes(client)
         return sizes
-
-    def _is_path_valid(self, path):
-        return path in self._get_disk_drives()
 
     def wait_for_all_volumes(self):
         from time import sleep
